@@ -7,6 +7,13 @@ This project is inspired by a [YouTube video](https://www.youtube.com/watch?v=w_
 
 [YouTube](https://youtu.be/YTiPrhIT0PM)
 
+# Download
+
+[Download](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases/tag/publish)
+
+For normal user just download the exe file and run it
+For advanced user who want to change some values just download the python file
+
 ## Forked From
 
 This project is a fork from the following repositories:
