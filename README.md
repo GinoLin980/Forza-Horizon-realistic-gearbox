@@ -13,7 +13,7 @@ This project is inspired by a [YouTube video](https://www.youtube.com/watch?v=w_
 
 For normal user just download the exe file and run it
 
-For advanced user who want to change some values just download the python file
+For advanced user who want to change some values just download the python file,and modify it on editor.
 
 ## Forked From
 
