@@ -25,6 +25,9 @@ aggr_lbl = 0
 lastShiftTime = 0
 lastShiftUpTime = 0
 lastShiftDownTime = 0
+gas_thresholds = [0.95, 0.4, 12, 0.15]  # Normal drive mode
+# gas_thresholds here just for initializing
+
 
 # reading data and assigning names to data types in data_types dict
 data_types = {
@@ -162,23 +165,6 @@ def get_data(data):
 
     # returns the dict
     return return_dict
-
-
-# setting up an udp server
-sock = socket.socket(socket.AF_INET,  # Internet
-                     socket.SOCK_DGRAM)  # UDP
-
-sock.bind((UDP_IP, UDP_PORT))
-data, addr = sock.recvfrom(1500)
-rt = get_data(data)
-
-# define the settings for different driving modes
-# 0 index is : used in agressiveness increase decision
-# 1 index is : used in agressiveness increase decision
-# 2 index is : how quickly the aggressiveness lowers when driving calmly (1/value)
-# 3 index is : the bare minimum aggressiveness to keep at any given time
-gas_thresholds = [0.95, 0.4, 12, 0.15]  # Normal drive mode
-# gas_thresholds here just for initializing
 
 
 def analyzeInput(deltaT):
@@ -341,6 +327,12 @@ def shiftDown():
     lastShiftTime = time.time()
     lastShiftDownTime = time.time()
 
+# setting up an udp server
+sock = socket.socket(socket.AF_INET,  # Internet
+                     socket.SOCK_DGRAM)  # UDP
+sock.bind((UDP_IP, UDP_PORT))
+data, addr = sock.recvfrom(1500)
+rt = get_data(data)
 
 print('Timeout is 10 seconds')
 print('Type in S to have Sports Mode')
