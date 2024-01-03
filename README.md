@@ -3,9 +3,7 @@
 This project is a Python script for creating a realistic gearbox for Forza Horizon 4/5.
 This project is inspired by a [YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) about a realistic gearbox, but that project was set to private. Therefore, this project was created.
 
-# Demonstration Video
-
-[YouTube](https://youtu.be/YTiPrhIT0PM)
+# [Demonstration Video](https://youtu.be/YTiPrhIT0PM)
 
 # Download
 
