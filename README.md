@@ -23,9 +23,9 @@ This project is a fork from the following repositories:
 Settings:
 - The gear changing is set to manual.
 
-The data output setting in the game should be set as follows:
-- UDP_IP = "127.0.0.1"
-- UDP_PORT = 8000
+The data output setting in the HUD and gameplay should be set as follows:
+- Data out IP address = 127.0.0.1
+- Data out IP port = 8000
 
 That's all :)
 
