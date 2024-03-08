@@ -1,8 +1,12 @@
+# 2024/3/8 v1.1
+# The code of this project is mostly taken from other people's project. You can freely use and edit this code.
 import socket
 import struct
 import time
 import keyboard
 from inputimeout import inputimeout
+import msvcrt as m
+import os
 
 print('WORKED')
 UDP_IP = "127.0.0.1"  # This sets server ip to the RPi ip
@@ -10,24 +14,28 @@ UDP_PORT = 8000  # You can freely edit this
 
 # initializing all the variables
 count = 0
+
 maxRPM = 0
 gear = 0
 gas = 0
 brake = 0
-steerAngle = 0
 rpm = 0
 speed = 0
-slipping = False
+
 waitTimeBetweenDownShifts = 2
-last_inc_aggr_time = 0
-aggressiveness = 0
-aggr_lbl = 0
 lastShiftTime = 0
 lastShiftUpTime = 0
 lastShiftDownTime = 0
-gas_thresholds = [0.95, 0.4, 12, 0.15]  # Normal drive mode
-# gas_thresholds here just for initializing
 
+last_inc_aggr_time = 0
+aggressiveness = 0
+
+# define the settings for different driving modes
+# 0 index is : used in agressiveness increase decision
+# 1 index is : used in agressiveness increase decision
+# 2 index is : how quickly the aggressiveness lowers when driving calmly (1/value)
+# 3 index is : the bare minimum aggressiveness to keep at any given time
+gas_thresholds = [0.95, 0.4, 12, 0.1]  # Normal drive mode
 
 # reading data and assigning names to data types in data_types dict
 data_types = {
@@ -131,7 +139,6 @@ jumps = {
     'hzn': 12  # Unknown, 12 bytes of.. something
 }
 
-
 def get_data(data):
     return_dict = {}
 
@@ -167,21 +174,30 @@ def get_data(data):
     return return_dict
 
 
-def analyzeInput(deltaT):
-    # add brake force, and consider brake force exactly as gas input
-    # if you need other types of data, they can be found at the dict data_types
-    global aggressiveness, aggr_lbl, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM
+# setting up an udp server
+sock = socket.socket(socket.AF_INET,  # Internet
+                     socket.SOCK_DGRAM)  # UDP
 
-    gas = rt['Accel'] / 255 # transform gas value into 0 to 100
+sock.bind((UDP_IP, UDP_PORT))
+data, addr = sock.recvfrom(1500)
+rt = get_data(data)
+
+def analyzeInput(deltaT):
+    # if you need other types of data, they can be found at the dict data_types
+    global aggressiveness, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM
+
+    # transform gas value into 0 to 1, because the original code is designed for Assetto Corsa
+    gas = rt['Accel'] / 255 
     brake = rt['Brake'] / 255
+
     rpmRangeTop = rt['EngineMaxRpm']
-    maxShiftRPM = rt['EngineMaxRpm'] * 0.9 # change this value if it is not capable on your car
+    maxShiftRPM = rt['EngineMaxRpm'] * 0.9 # change this value if it is not capable to upshift on your car, mostly for some trucks.
     idleRPM = rt['EngineIdleRpm']
     gear = rt['Gear']
-    rpmRangeSize = (rt['EngineMaxRpm'] - rt['EngineIdleRpm']) / 3
+    rpmRangeSize = (rt['EngineMaxRpm'] - rt['EngineIdleRpm']) / 4
 
     # compute a new aggressiveness level depending on the gas and brake pedal pressure
-    # and apply a factor from the current driving mode
+    # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]
     new_aggr = min(
         1,
         max((gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1]),
@@ -207,57 +223,47 @@ def analyzeInput(deltaT):
     # it's only used by the sport mode, to maintain the aggressiveness always above 0.5
     # all other driving modes will use the actual computed aggressiveness 
     # (which can be bellow 0.5)
-    aggressiveness = max(
-        aggressiveness,
-        gas_thresholds[3]
-    )
+    aggressiveness = max(aggressiveness, gas_thresholds[3])
 
     # adjust the allowed upshifting rpm range, 
     # depending on the aggressiveness
-    rpmRangeTop = (
-            idleRPM + 500 +
-            (
-                    (maxShiftRPM - idleRPM - 400)
-                    * aggressiveness *0.95
-            )
-    )
+    rpmRangeTop = (idleRPM + 500 + ((maxShiftRPM - idleRPM - 400) * aggressiveness *0.95))
+
     # adjust the allowed downshifting rpm range, 
     # depending on the aggressiveness
-    rpmRangeBottom = max(
-        idleRPM + (min(gear, 6) * 50),
-        rpmRangeTop - rpmRangeSize
-    )
+    rpmRangeBottom = max(idleRPM + (min(gear, 6) * 50), rpmRangeTop - rpmRangeSize)
     
     
     
 
 
 def makeDecision():
-    global speed, rpm
+    global speed, rpm, gas, count
     speed = rt['Speed']
     rpm = rt['CurrentEngineRpm']
+    
     # when braking we allow quick followup of downshift, but not when accelerating
     if (brake > 0):
-        waitTimeBetweenDownShifts = 1
+        waitTimeBetweenDownShifts = 0.4
     elif (brake == 0):
-        waitTimeBetweenDownShifts = 1
-    global count
+        waitTimeBetweenDownShifts = 0.8
     if rpm > rpmRangeTop -600 and rpm >700 and rt['Speed'] > 5 and gas > 0:
         count += 1 
     if time.time() > lastShiftTime + 5 and rpm < 1900 or gas > 0.25:
         count = 0
-
-
+    
+    
     if (
             # we have already shifted in the last 0.1s
             time.time() < lastShiftTime + 0.1 or
             # or we are in neutral
             gear < 1 or
             # or we have already shifted up in the last 1.3 sec
-            time.time() < lastShiftUpTime + 1.3 or
+            time.time() < lastShiftUpTime + 0.9 or
             # or we have already shifted down in the last 1 sec
             time.time() < lastShiftDownTime + waitTimeBetweenDownShifts 
     ):
+        
         # do not change gear
         return
     if (
@@ -269,11 +275,16 @@ def makeDecision():
             brake == 0 and
             # we are not coasting either
             gas > 0 and
+            # we are above 15km/h # speed value in FH is really weird, 4 equals 15km/h
             rt['Speed'] > 4
-            or count == 300 # count means we can slowly accelerate like we do in real car
+            # count means we can slowly accelerate like we do in real car
+            or count == 300  
     ):
         # actually UPSHIFT
+       
         shiftUp()
+
+
 
     elif (
             # we have reached the lower rpm range (downshift are rpm-allowed)
@@ -290,25 +301,29 @@ def makeDecision():
                             # we are about to downshift into 1st
                             gear == 2 and
                             (
-                                    # we must be very vert aggressive to allow that to happen
-                                    aggressiveness >= 0.95 or
-                                    # be very very slow (less than 15km/h, which is always ok)
-                                    speed <= 4 # speed value in FH is really weird, 4 equals 15km/h
-                            )
-                    ) or
-                    (
+                                    # we must be very vert aggressive to allow that to happen or be very very slow (less than 15km/h, which is always ok)
+                                    (aggressiveness >= 0.95 or speed <= 4)
+                            ) or
+                        (
                             # we are in an overdrive gear
                             gear >= 4 and
                             # we are braking
                             brake > 0
+                        )
                     )
             )
     ):
+        # shiftdown two times if we are in an overdrive gear and are flooring the gas
+        # if gas >= 70 and rpm < 4000:
+        #     shiftDown()
+        #     shiftDown()
+        #     return
         # actually DOWNSHIFT
         shiftDown()
     # reset the count after shifting
     if count >= 300:
         count = 0
+
 
 
 def shiftUp():
@@ -327,13 +342,27 @@ def shiftDown():
     lastShiftTime = time.time()
     lastShiftDownTime = time.time()
 
-# setting up an udp server
-sock = socket.socket(socket.AF_INET,  # Internet
-                     socket.SOCK_DGRAM)  # UDP
-sock.bind((UDP_IP, UDP_PORT))
-data, addr = sock.recvfrom(1500)
-rt = get_data(data)
+# to change the drive mode
+def mode_changer():
+    global gas_thresholds
+    if keyboard.is_pressed('7'):
+        os.system('cls')
+        print('Normal Mode')
+        gas_thresholds = [0.95, 0.4, 4, 0.1]
+    elif keyboard.is_pressed('8'):
+        os.system('cls')
+        print('Sports Mode')
+        gas_thresholds = [0.8, 0.4, 24, 0.5]
+    elif keyboard.is_pressed('9'):
+        os.system('cls')
+        print('Eco Mode')
+        gas_thresholds = [1, 0.5, 3, 0]
+    elif keyboard.is_pressed('0'):
+        os.system('cls')
+        print('Manual Mode')
+        gas_thresholds = [0, 0, 0, 0]
 
+# Choosing modes in terminal
 print('Timeout is 10 seconds')
 print('Type in S to have Sports Mode')
 print('Type in e to have Eco Mode')
@@ -348,24 +377,34 @@ print('OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE')
 
 try:
     answer = inputimeout(prompt='Mode: ', timeout=10)# to wait user input
+    os.system('cls')
     if answer == 's' or answer == 'S':
         gas_thresholds = [0.8, 0.4, 24, 0.5]#Sports Mode
     elif answer == '':
-        gas_thresholds = [0.95, 0.4, 6, 0.15]#Normal Mode
+        gas_thresholds = [0.95, 0.4, 4, 0.1]#Normal Mode
     elif answer == 'e' or answer == 'E':
         gas_thresholds = [1, 0.5, 3, 0]#Eco Mode
 
-    if gas_thresholds == [0.95, 0.4, 6, 0.15]:#Normal Mode
+    if gas_thresholds == [0.95, 0.4, 4, 0.1]:#Normal Mode
         print('Normal Mode')
     elif gas_thresholds == [0.8, 0.4, 24, 0.5]:#Sports Mode
         print('Sports Mode')
     elif gas_thresholds == [1, 0.5, 3, 0]:#Eco Mode
         print('Eco Mode')
 except:
-    gas_thresholds = [0.95, 0.4, 6, 0.15]#Normal Mode
+    os.system('cls')
+    gas_thresholds = [0.95, 0.4, 4, 0.1]#Normal Mode
     print('Normal Mode')
 
+print("press ` to stop the program")
+print('you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ')
+
 lastTime = time.time()
+
+max_rpm = 0
+
+mode_count = 0
+
 while True:
     data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
 
@@ -382,4 +421,19 @@ while True:
     # print(deltaT)
     analyzeInput(deltaT)
     makeDecision()
-    print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count}")# monitor the current status(i don't know how to use graphic interface :(   )
+    if rpm > max_rpm:
+        max_rpm = round(rpm, 2)
+    # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2), max_rpm}")# monitor the current status(i don't know how to use graphic interface :(   )
+    
+
+    # choosing modes by hitting 7, 8, 9, 0
+    mode_changer()
+
+
+    # stop the program
+    if keyboard.is_pressed('`'):
+        print("You stopped the program, press \\ again to resume.")
+        while True:
+            if keyboard.is_pressed("\\"):
+                print('Resumed.')
+                break
