@@ -32,4 +32,4 @@ That's all :)
 If there's any questions, please post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues)
 
 ## Discord
-If you want to help me developing the app(help me learn python more :) ), please join [my Discord server.](https://discord.gg/YZ5ge3Em)
+If you want to help me developing the app(help me learn python more :) ), please join [my Discord server.](https://discord.com/invite/Ch9vdu4mT4)
