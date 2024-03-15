@@ -38,4 +38,7 @@ That's all :)
 If there's any questions, please post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues)
 
 ## Discord
-If you want to help me developing the app(help me learn python more :) ), please join [my Discord server.](https://discord.com/invite/Ch9vdu4mT4)
+If you want to help me developing the app(help me learn python more :) ), please join [my Discord server.](https://discord.com/invite/Ch9vdu4mT4
+
+## Nexus Mod
+[Nexus](https://www.nexusmods.com/forzahorizon5/mods/258/?tab=description)
