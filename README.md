@@ -1,13 +1,17 @@
 # Realistic Gearbox for Forza Horizon 4/5
 
-This project is a Python script for creating a realistic gearbox for Forza Horizon 4/5.
+This project is a Python script for creating a realistic gearbox for Forza Horizon 4/5. More specifically, I made it for casual driving just like in real life, slowly drive in the city and some sudden accelerate for taking over.
 This project is inspired by a [YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) about a realistic gearbox, but that project was set to private. Therefore, this project was created.
 
 # [Demonstration Video](https://youtu.be/YTiPrhIT0PM)
 
+# Features
+Shift like REAL CAR
+Allow drive mode changing (Normal, Sports, Eco, Manual)
+
 # Download
 
-[Download](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases/tag/publish)
+[Download](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)
 
 For normal user just download the exe file and run it
 
@@ -22,6 +26,7 @@ This project is a fork from the following repositories:
 ## Setup
 Settings:
 - The gear changing is set to manual.
+- And make sure that pressing **Q** and **E** is able to shift down and up. The program shift with those keys!
 
 The data output setting in the HUD and gameplay should be set as follows:
 - Data out IP address = 127.0.0.1
