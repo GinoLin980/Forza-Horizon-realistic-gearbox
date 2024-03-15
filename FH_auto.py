@@ -368,7 +368,7 @@ def mode_changer():
     if keyboard.is_pressed("7"):
         os.system("cls")
         print("Normal Mode")
-        gas_thresholds = [0.95, 0.4, 18, 0.1]
+        gas_thresholds = [0.95, 0.5, 18, 0.1]
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
