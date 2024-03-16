@@ -1,7 +1,7 @@
 # Realistic Gearbox for Forza Horizon 4/5
 
 ## Introduction
-This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox. It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video]([https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
+This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox. It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
 
 ## Demonstration
 Check out the [Demonstration Video]([url](https://youtu.be/YTiPrhIT0PM)) to see the gearbox in action!
@@ -11,7 +11,7 @@ Check out the [Demonstration Video]([url](https://youtu.be/YTiPrhIT0PM)) to see 
 - **Drive Mode Selection**: Choose between Normal, Sports, Eco, or Manual modes.
 
 ## Installation
-### [Release Page]([url](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases))
+### [Release Page](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)
 - **Standard Users**: Simply download the `.exe` file and run it.
 - **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
 
