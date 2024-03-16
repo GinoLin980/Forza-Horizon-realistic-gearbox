@@ -25,6 +25,9 @@ This project is a fork from the following repositories:
 - [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
 
 ## Setup
+Requirement:
+Controller or wheel needed
+
 Settings:
 - The gear changing is set to manual.
 - And make sure that pressing **Q** and **E** is able to shift down and up. The program shift with those keys!
