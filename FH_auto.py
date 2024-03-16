@@ -28,6 +28,8 @@ lastShiftDownTime = 0
 last_inc_aggr_time = 0
 aggressiveness = 0
 
+lastTime = time.time()
+
 # define the settings for different driving modes
 # 0 index is : used in agressiveness increase decision
 # 1 index is : used in agressiveness increase decision
@@ -173,19 +175,6 @@ def get_data(data):
     # returns the dict
     return return_dict
 
-
-# setting up an udp server
-sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
-
-print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
-print(f"AND THE PORT TO {UDP_PORT}")
-sock.bind((UDP_IP, UDP_PORT))
-data, addr = sock.recvfrom(1500)
-rt = get_data(data)
-os.system("cls")
-print("WORKED")
-
-
 def analyzeInput(deltaT):
     # if you need other types of data, they can be found at the dict data_types
     global aggressiveness, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM
@@ -236,7 +225,6 @@ def analyzeInput(deltaT):
     # depending on the aggressiveness
     rpmRangeBottom = max(idleRPM + (min(gear, 6) * 50), rpmRangeTop - rpmRangeSize)
 
-
 def makeDecision():
     global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent
     speed = rt["Speed"]
@@ -248,6 +236,7 @@ def makeDecision():
         waitTimeBetweenDownShifts = 0.4
     elif brake == 0:
         waitTimeBetweenDownShifts = 0.3
+
     if rpm > rpmRangeTop - 600 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
         count += 1
     
@@ -326,11 +315,12 @@ def makeDecision():
         if downshift_count < 3 and gas > 0.8:
             downshift_count += 1
             shiftDown()
+            # prevent over down shifting
             if rpm > rpmRangeSize * 2:
                 downshift_count += 1
             return 
         if downshift_count >= 3:
-            prevent = lastShiftDownTime + 0.2
+            prevent = 0.3
         shiftDown()
     
     if time.time() > lastShiftDownTime + 4:
@@ -343,7 +333,6 @@ def makeDecision():
     if time.time() > lastShiftTime + 5 and rpm < 1900 or gas > 0.25:
         count = 0
 
-
 def shiftUp():
     global lastShiftTime, lastShiftUpTime
 
@@ -351,7 +340,6 @@ def shiftUp():
     # update the last shifting times
     lastShiftTime = time.time()
     lastShiftUpTime = time.time()
-
 
 def shiftDown():
     global lastShiftTime, lastShiftDownTime
@@ -361,6 +349,17 @@ def shiftDown():
     lastShiftTime = time.time()
     lastShiftDownTime = time.time()
 
+def statement():
+    # Choosing modes in terminal
+    print("Timeout is 10 seconds")
+    print("Type in S to have Sports Mode")
+    print("Type in e to have Eco Mode")
+    print("Enter to have Normal Mode")
+    print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
+
+    mode_selector()
+    print("press ` to stop the program")
+    print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
 # to change the drive mode
 def mode_changer():
@@ -368,105 +367,99 @@ def mode_changer():
     if keyboard.is_pressed("7"):
         os.system("cls")
         print("Normal Mode")
-        gas_thresholds = [0.95, 0.5, 18, 0.1]
+        gas_thresholds = [0.95, 0.6, 18, 0.1]
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
-        gas_thresholds = [0.8, 0.4, 24, 0.5]
+        gas_thresholds = [0.8, 0.3, 30, 0.6]
     elif keyboard.is_pressed("9"):
         os.system("cls")
         print("Eco Mode")
-        gas_thresholds = [1, 0.5, 5, 0]
+        gas_thresholds = [1, 0.45, 10, 0.05]
     elif keyboard.is_pressed("0"):
         os.system("cls")
         print("Manual Mode")
         gas_thresholds = [0, 0, 0, 0]
 
-
-# Choosing modes in terminal
-print("Timeout is 10 seconds")
-print("Type in S to have Sports Mode")
-print("Type in e to have Eco Mode")
-print("Enter to have Normal Mode")
-print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
-
-# define the settings for different driving modes
-# 0 index is : used in agressiveness increase decision
-# 1 index is : used in agressiveness increase decision
-# 2 index is : how quickly the aggressiveness lowers when driving calmly (1/value)
-# 3 index is : the bare minimum aggressiveness to keep at any given time
-
-try:
-    answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
-    os.system("cls")
-    if answer == "s" or answer == "S":
-        gas_thresholds = [0.8, 0.4, 24, 0.5]  # Sports Mode
-    elif answer == "":
-        gas_thresholds = [0.95, 0.4, 4, 0.1]  # Normal Mode
-    elif answer == "e" or answer == "E":
-        gas_thresholds = [1, 0.5, 3, 0]  # Eco Mode
-
-    if gas_thresholds == [0.95, 0.4, 4, 0.1]:  # Normal Mode
-        print("Normal Mode")
-    elif gas_thresholds == [0.8, 0.4, 24, 0.5]:  # Sports Mode
-        print("Sports Mode")
-    elif gas_thresholds == [1, 0.5, 3, 0]:  # Eco Mode
-        print("Eco Mode")
-except:
-    os.system("cls")
-    gas_thresholds = [0.95, 0.4, 4, 0.1]  # Normal Mode
-    print("Normal Mode")
-
-print("press ` to stop the program")
-print(
-    "you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 "
-)
-
-lastTime = time.time()
-
-max_rpm = 0
-
-mode_count = 0
-
-while True:
-    # choosing modes by hitting 7, 8, 9, 0
-    mode_changer()
-    # stop calculation if the mode is in manual
-    if gas_thresholds == [0, 0, 0, 0]:
-        continue
-
-    data, addr = sock.recvfrom(
-        1500
-    )  # buffer size is 1500 bytes, this line reads data from the socket
-
-    # received data is now in the retuturned_data dict
-    rt = get_data(data)
-
-    # Calculate deltaT as the time elapsed since the last frame
-    current_time = time.time()
-    deltaT = (current_time - lastTime) * 100  # to simulate the deltaT in Assetto Corsa
-
-    # Update your last_time variable for the next frame
-    lastTime = current_time
-
-    # print(deltaT)
-    analyzeInput(deltaT)
-    makeDecision()
-    if rpm > max_rpm:
-        max_rpm = round(rpm, 2)
-    # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2), max_rpm}")# monitor the current status(i don't know how to use graphic interface :(   )
-
-    
-
-    # stop the program
-    if keyboard.is_pressed("`"):
+def mode_selector():
+    try:
+        answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
         os.system("cls")
-        print("You stopped the program, press \\ again to resume.")
-        print("press ESC to quit the program")
-        while True:
-            if keyboard.is_pressed("\\"):
-                print("Resumed.")
-                break
-            elif keyboard.is_pressed("esc"):
-                print("Quitting...")
-                quit()
+        if answer == "s" or answer == "S":
+            gas_thresholds = [0.8, 0.3, 30, 0.6]  # Sports Mode
+        elif answer == "":
+            gas_thresholds = [0.95, 0.6, 18, 0.1]  # Normal Mode
+        elif answer == "e" or answer == "E":
+            gas_thresholds = [1, 0.45, 3, 0.05]  # Eco Mode
+
+        if gas_thresholds == [0.95, 0.6, 18, 0.1]:  # Normal Mode
+            print("Normal Mode")
+        elif gas_thresholds == [0.8, 0.3, 30, 0.6]:  # Sports Mode
+            print("Sports Mode")
+        elif gas_thresholds == [1, 0.45, 3, 0.05]:  # Eco Mode
+            print("Eco Mode")
+    except:
+        os.system("cls")
+        gas_thresholds = [0.95, 0.5, 18, 0.1]  # Normal Mode
+        print("Normal Mode")
+
+def mainfunc():
+    global rt, deltaT, lastTime, addr
+
+    # setting up an udp server
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
+
+    print(f"PLEASE OPEN UP THE GAME FIRST")
+    print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
+    print(f"AND THE PORT TO {UDP_PORT}")
+    sock.bind((UDP_IP, UDP_PORT))
+    data, addr = sock.recvfrom(1500)
+    rt = get_data(data)
+    os.system("cls")
+    print("WORKED")
+
+    statement()
+
+
+    while True:
+        # choosing modes by hitting 7, 8, 9, 0
+        mode_changer()
+        # stop calculation if the mode is in manual
+        if gas_thresholds == [0, 0, 0, 0]:
+            continue
+
+        data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
+
+        # received data is now in the retuturned_data dict
+        rt = get_data(data)
+
+        # Calculate deltaT as the time elapsed since the last frame
+        current_time = time.time()
+        deltaT = (current_time - lastTime) * 100  # to simulate the deltaT in Assetto Corsa
+
+        # Update your last_time variable for the next frame
+        lastTime = current_time
+
+        analyzeInput(deltaT)
+        makeDecision()
+
+        # stop the program
+        if keyboard.is_pressed("`"):
+            os.system("cls")
+            print("You stopped the program, press \\ again to resume.")
+            print("press ESC to quit the program")
+            while True:
+                if keyboard.is_pressed("\\"):
+                    print("Resumed.")
+                    break
+                elif keyboard.is_pressed("esc"):
+                    print("Quitting...")
+                    quit()
+
+        # print(deltaT)
+        # if rpm > max_rpm:
+        #     max_rpm = round(rpm, 2)
+        # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
+
+
+mainfunc()
