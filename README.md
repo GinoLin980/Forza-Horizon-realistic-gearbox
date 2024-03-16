@@ -4,7 +4,7 @@
 This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox. It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
 
 ## Demonstration
-Check out the [Demonstration Video]([url](https://youtu.be/YTiPrhIT0PM)) to see the gearbox in action!
+Check out the [Demonstration Video](https://youtu.be/YTiPrhIT0PM) to see the gearbox in action!
 
 ## Features
 - **Shift like a REAL CAR**: Experience gear shifting just like you would in a real vehicle.
