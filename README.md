@@ -11,7 +11,7 @@ Check out the [Demonstration Video](https://youtu.be/YTiPrhIT0PM) to see the gea
 - **Drive Mode Selection**: Choose between Normal, Sports, Eco, or Manual modes.
 
 ## Installation
-### [Release Page](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)
+### [Release Page](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)   [![Github All Releases](https://img.shields.io/github/downloads/GinoLin980/Forza-Horizon-realistic-gearbox/total.svg)]()
 - **Standard Users**: Simply download the `.exe` file and run it.
 - **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
 
