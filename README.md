@@ -20,15 +20,17 @@ This project builds upon the work from:
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
 - [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
 
+### Big thanks to these bros, I can't make this without them. 🫶
+
 ## Setup Instructions
-- **Requirements**: A controller or wheel is necessary.
-- **Settings**: Ensure gear changing is set to manual and that Q and E keys can shift down and up, respectively.
+- **Requirements**: **A controller or wheel is necessary.**
+- **Settings**: Ensure gear changing is set to manual and that `Q` and `E` keys can `shift down and up`, respectively.
 - **Data Output**: Configure the HUD and gameplay data output as follows:
   - IP Address: `127.0.0.1`
   - Port: `8000`
 
 ## Support
-Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
+### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
 
 ## Nexus Mod
 Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/258/?tab=description)
