@@ -19,6 +19,7 @@ gas = 0
 brake = 0
 rpm = 0
 speed = 0
+slip = False
 
 waitTimeBetweenDownShifts = 0.8
 lastShiftTime = 0
@@ -28,7 +29,7 @@ lastShiftDownTime = 0
 last_inc_aggr_time = 0
 aggressiveness = 0
 
-lastTime = time.time()
+
 
 # define the settings for different driving modes
 # 0 index is : used in agressiveness increase decision
@@ -175,9 +176,9 @@ def get_data(data):
     # returns the dict
     return return_dict
 
-def analyzeInput(deltaT):
+def analyzeInput():
     # if you need other types of data, they can be found at the dict data_types
-    global aggressiveness, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM
+    global aggressiveness, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM, slip
 
     # transform gas value into 0 to 1, because the original code is designed for Assetto Corsa
     gas = rt["Accel"] / 255
@@ -209,7 +210,7 @@ def analyzeInput(deltaT):
     # if we have not increased the agressiveness for at least 2 seconds
     if time.time() > last_inc_aggr_time + 2:
         # we lower the aggressiveness by a factor given by the current driving move
-        aggressiveness -= deltaT / gas_thresholds[2] / 10
+        aggressiveness -= 1 / gas_thresholds[2]
 
     # we maintain a minimum aggressiveness defined by the current driving mode
     # it's only used by the sport mode, to maintain the aggressiveness always above 0.5
@@ -224,6 +225,11 @@ def analyzeInput(deltaT):
     # adjust the allowed downshifting rpm range,
     # depending on the aggressiveness
     rpmRangeBottom = max(idleRPM + (min(gear, 6) * 50), rpmRangeTop - rpmRangeSize)
+
+    if rt["TireSlipRatioFrontLeft"] > 1 or rt["TireSlipRatioFrontRight"] > 1 or rt["TireSlipRatioRearLeft"]  > 1 or rt["TireSlipRatioRearRight"] > 1:
+        slip = True
+    else:
+        slip = False
 
 def makeDecision():
     global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent
@@ -260,6 +266,8 @@ def makeDecision():
     if (
         # we have reached the top range (upshift are rpm-allowed)
         rpm > rpmRangeTop
+        and
+        not slip
         and
         # we have not downshifted in the last 1 sec (to prevent up-down-up-down-up-down)
         time.time() > prevent
@@ -320,7 +328,7 @@ def makeDecision():
                 downshift_count += 1
             return 
         if downshift_count >= 3:
-            prevent = 0.3
+            prevent = 0
         shiftDown()
     
     if time.time() > lastShiftDownTime + 4:
@@ -404,10 +412,11 @@ def mode_selector():
         print("Normal Mode")
 
 def mainfunc():
-    global rt, deltaT, lastTime, addr
+    global rt, lastTime, addr
 
     # setting up an udp server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
+    
 
     print(f"PLEASE OPEN UP THE GAME FIRST")
     print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
@@ -425,24 +434,15 @@ def mainfunc():
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
         # stop calculation if the mode is in manual
-        if gas_thresholds == [0, 0, 0, 0]:
+        if gas_thresholds == [0, 0, 0, 0] :
             continue
+        
 
+        
         data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
 
         # received data is now in the retuturned_data dict
         rt = get_data(data)
-
-        # Calculate deltaT as the time elapsed since the last frame
-        current_time = time.time()
-        deltaT = (current_time - lastTime) * 100  # to simulate the deltaT in Assetto Corsa
-
-        # Update your last_time variable for the next frame
-        lastTime = current_time
-
-        analyzeInput(deltaT)
-        makeDecision()
-
         # stop the program
         if keyboard.is_pressed("`"):
             os.system("cls")
@@ -455,10 +455,11 @@ def mainfunc():
                 elif keyboard.is_pressed("esc"):
                     print("Quitting...")
                     quit()
-
-        # print(deltaT)
-        # if rpm > max_rpm:
-        #     max_rpm = round(rpm, 2)
+        if  rt["IsRaceOn"] == 0:
+            continue
+        analyzeInput()
+        makeDecision()
+        print(rt["TireSlipRatioFrontLeft"], rt["TireSlipRatioFrontRight"], rt["TireSlipRatioRearLeft"], rt["TireSlipRatioRearRight"], slip)
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
 
 
