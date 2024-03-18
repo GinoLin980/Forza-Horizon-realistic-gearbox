@@ -4,16 +4,14 @@ import socket, struct, os
 import keyboard, time
 from inputimeout import inputimeout
 
-UDP_IP = "127.0.0.1"  # This sets server ip to the RPi ip
+# initializing all the variables
+UDP_IP = "127.0.0.1"  # This sets server ip to localhost
 UDP_PORT = 8000  # You can freely edit this
 
-# initializing all the variables
 count = 0
 downshift_count = 0
 prevent = 0
 
-
-maxRPM = 0
 gear = 0
 gas = 0
 brake = 0
@@ -39,7 +37,7 @@ aggressiveness = 0
 gas_thresholds = [0.95, 0.4, 12, 0.1]  # Normal drive mode
 
 
-# reading data and assigning names to data types in data_types dict
+# reading data and assigning names to data types in data_types dict. this is from official Forza Forum
 data_types = {
     "IsRaceOn": "s32",
     "TimestampMS": "u32",
@@ -185,10 +183,10 @@ def analyzeInput():
     brake = rt["Brake"] / 255
 
     rpmRangeTop = rt["EngineMaxRpm"]
-    maxShiftRPM = rt["EngineMaxRpm"] * 0.88  # change this value if it is not capable to upshift on your car, espacially for some trucks.
+    rpmRangeSize = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
+    maxShiftRPM = rt["EngineMaxRpm"] * 0.9  # change this value if it is not capable to upshift on your car, espacially for some trucks.
     idleRPM = rt["EngineIdleRpm"]
     gear = rt["Gear"]
-    rpmRangeSize = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
 
     # compute a new aggressiveness level depending on the gas and brake pedal pressure
     # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]
@@ -233,23 +231,25 @@ def analyzeInput():
 
 def makeDecision():
     global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent
+    
+    prevent = lastShiftDownTime + 1.2
     speed = rt["Speed"]
     rpm = rt["CurrentEngineRpm"]
-    prevent = lastShiftDownTime + 1.2
 
-    # when braking we allow quick followup of downshift, but not when accelerating
-    if brake > 0:
-        waitTimeBetweenDownShifts = 0.4
-    elif brake == 0:
-        waitTimeBetweenDownShifts = 0.3
-
+    if downshift_count == 0:
+        # when braking we allow quick followup of downshift, but not when accelerating
+        if brake > 0:
+            waitTimeBetweenDownShifts = 0.4
+        elif brake == 0:
+            waitTimeBetweenDownShifts = 1.5
+    # count means we can slowly accelerate like we do in real car
     if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
         count += 1
     
 
     if (
         # we have already shifted in the last 0.1s
-        time.time() < lastShiftTime + 0.2
+        time.time() < lastShiftTime + 0.1
         or
         # or we are in neutral
         gear < 1
@@ -257,19 +257,21 @@ def makeDecision():
         # or we have already shifted up in the last 1.3 sec
         time.time() < lastShiftUpTime + 1.3
         or
-        # or we have already shifted down in the last 1 sec
+        # or we have already shifted down in the last 1.5 sec
         time.time() < lastShiftDownTime + waitTimeBetweenDownShifts
     ):
 
         # do not change gear
         return
+    
     if (
         # we have reached the top range (upshift are rpm-allowed)
         rpm > rpmRangeTop
         and
+        # we are not slipping
         not slip
         and
-        # we have not downshifted in the last 1 sec (to prevent up-down-up-down-up-down)
+        # we have not downshifted in the last 1.2 sec (to prevent up-down-up-down-up-down)
         time.time() > prevent
         and
         # we are not on the brakes
@@ -293,6 +295,8 @@ def makeDecision():
         # we have reached the lower rpm range (downshift are rpm-allowed)
         rpm < rpmRangeBottom
         and
+        not slip
+        and
         # we are not in first gear (meaning we have gears available bellow us)
         gear > 1
         and
@@ -303,29 +307,24 @@ def makeDecision():
         (
             # we are NOT about to downshift into 1st, we can allow it
             gear > 2
+            
             or (
-                # we are about to downshift into 1st
-                gear == 2
-                and (
-                    # we must be very vert aggressive to allow that to happen or be very very slow (less than 15km/h, which is always ok)
-                    (aggressiveness >= 0.95 or speed <= 4)
-                )
-                or (
-                    # we are in an overdrive gear
-                    gear >= 4
-                    and
-                    # we are braking
-                    brake > 0
-                )
+                # we must be very vert aggressive to allow that to happen 
+                # or be very very slow (less than 15km/h, which is always ok)
+                # we are about to downshift into 1st. 
+                (gear == 2 and (aggressiveness >= 0.95 or speed <= 4))
+                # we are in an overdrive gear # we are braking       
+                or (gear >= 4 and brake > 0) 
             )
         )
     ):
         # allow 3 times of downshift in a row
-        if downshift_count < 3 and gas > 0.8:
+        if downshift_count < 3 and gas > 0.6:
+            waitTimeBetweenDownShifts = 0
             downshift_count += 1
             shiftDown()
             # prevent over down shifting
-            if rpm > rpmRangeSize * 2:
+            if rpm > rpmRangeSize * 2.5:
                 downshift_count += 1
             return 
         # to allow consequent upshift 
@@ -333,19 +332,18 @@ def makeDecision():
             prevent = 0
         shiftDown()
     
+    # allow another continuous downshift after 4 sec
     if time.time() > lastShiftDownTime + 4:
         downshift_count = 0
-        lastShiftDownTime = time.time()
     
-    # reset the count after shifting
-    if count >= 300:
-        count = 0
-    if time.time() > lastShiftTime + 5 and rpm < 1900 or gas > 0.25:
+    # reset the count after shifting or we are not in the condition anymore
+    if count >= 300 or ((time.time() > lastShiftTime + 5 and rpm < 1900) or gas > 0.3):
         count = 0
 
 def shiftUp():
     global lastShiftTime, lastShiftUpTime
 
+    # shift up by press e
     keyboard.press_and_release("e")
     # update the last shifting times
     lastShiftTime = time.time()
@@ -354,6 +352,7 @@ def shiftUp():
 def shiftDown():
     global lastShiftTime, lastShiftDownTime
 
+    # shift down by press q
     keyboard.press_and_release("q")
     # update the last shifting times
     lastShiftTime = time.time()
@@ -366,9 +365,10 @@ def statement():
     print("Type in e to have Eco Mode")
     print("Enter to have Normal Mode")
     print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
-
+    print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
+    
     mode_selector()
-    print("press ` to stop the program")
+    print("press ` (under the esc) to stop the program")
     print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
 # to change the drive mode
@@ -426,7 +426,7 @@ def pause():
                     print("Quitting...")
                     quit()
 
-def mainfunc():
+def main():
     global rt, addr
 
     # setting up an udp server
@@ -434,6 +434,7 @@ def mainfunc():
     
 
     print(f"PLEASE OPEN UP THE GAME FIRST")
+    print("AND MAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
     print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
     print(f"AND THE PORT TO {UDP_PORT}")
     sock.bind((UDP_IP, UDP_PORT))
@@ -465,8 +466,8 @@ def mainfunc():
             continue
         analyzeInput()
         makeDecision()
-        # print(rt["TireSlipRatioFrontLeft"], rt["TireSlipRatioFrontRight"], rt["TireSlipRatioRearLeft"], rt["TireSlipRatioRearRight"], slip)
+        
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
 
 
-mainfunc()
+main()
