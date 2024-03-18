@@ -10,7 +10,7 @@ UDP_PORT = 8000  # You can freely edit this
 
 count = 0
 downshift_count = 0
-prevent = 0
+
 
 gear = 0
 gas = 0
@@ -23,10 +23,13 @@ waitTimeBetweenDownShifts = 0.8
 lastShiftTime = 0
 lastShiftUpTime = 0
 lastShiftDownTime = 0
+prevent = lastShiftDownTime + 1.2
 
 last_inc_aggr_time = 0
 aggressiveness = 0
 
+
+sizecount = 0 
 
 
 # define the settings for different driving modes
@@ -230,9 +233,8 @@ def analyzeInput():
         slip = False
 
 def makeDecision():
-    global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent
+    global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent, waitTimeBetweenDownShifts, sizecount
     
-    prevent = lastShiftDownTime + 1.2
     speed = rt["Speed"]
     rpm = rt["CurrentEngineRpm"]
 
@@ -319,21 +321,23 @@ def makeDecision():
         )
     ):
         # allow 3 times of downshift in a row
-        if downshift_count < 3 and gas > 0.6:
+        if downshift_count < 4 and gas > 0.6:
             waitTimeBetweenDownShifts = 0
             downshift_count += 1
             shiftDown()
             # prevent over down shifting
             if rpm > rpmRangeSize * 2.5:
                 downshift_count += 1
+                sizecount += 1
             return 
         # to allow consequent upshift 
-        if downshift_count >= 3:
+        if downshift_count >= 4:
             prevent = 0
+            return
         shiftDown()
     
     # allow another continuous downshift after 4 sec
-    if time.time() > lastShiftDownTime + 4:
+    if time.time() > lastShiftDownTime + 1:
         downshift_count = 0
     
     # reset the count after shifting or we are not in the condition anymore
@@ -466,6 +470,7 @@ def main():
             continue
         analyzeInput()
         makeDecision()
+        print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize *2.5, sizecount)
         
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
 
