@@ -1,4 +1,4 @@
-# 2024/3/8 v1.1
+# 2024/3/8 v1.2 Deleted DeltaT and added slip
 # The code of this project is mostly taken from other people's project. You can freely use and edit this code.
 import socket, struct, os
 import keyboard, time
@@ -243,7 +243,7 @@ def makeDecision():
     elif brake == 0:
         waitTimeBetweenDownShifts = 0.3
 
-    if rpm > rpmRangeTop - 600 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
+    if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
         count += 1
     
 
@@ -286,6 +286,7 @@ def makeDecision():
         # actually UPSHIFT
 
         shiftUp()
+        # reset the shift prevention time back to 1.2
         prevent = lastShiftDownTime + 1.2
 
     elif (
@@ -327,6 +328,7 @@ def makeDecision():
             if rpm > rpmRangeSize * 2:
                 downshift_count += 1
             return 
+        # to allow consequent upshift 
         if downshift_count >= 3:
             prevent = 0
         shiftDown()
@@ -411,8 +413,21 @@ def mode_selector():
         gas_thresholds = [0.95, 0.5, 18, 0.1]  # Normal Mode
         print("Normal Mode")
 
+def pause():
+    if keyboard.is_pressed("`"):
+            os.system("cls")
+            print("You stopped the program, press \\ again to resume.")
+            print("press ESC to quit the program")
+            while True:
+                if keyboard.is_pressed("\\"):
+                    print("Resumed.")
+                    break
+                elif keyboard.is_pressed("esc"):
+                    print("Quitting...")
+                    quit()
+
 def mainfunc():
-    global rt, lastTime, addr
+    global rt, addr
 
     # setting up an udp server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
@@ -431,6 +446,7 @@ def mainfunc():
 
 
     while True:
+        pause()
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
         # stop calculation if the mode is in manual
@@ -443,23 +459,13 @@ def mainfunc():
 
         # received data is now in the retuturned_data dict
         rt = get_data(data)
-        # stop the program
-        if keyboard.is_pressed("`"):
-            os.system("cls")
-            print("You stopped the program, press \\ again to resume.")
-            print("press ESC to quit the program")
-            while True:
-                if keyboard.is_pressed("\\"):
-                    print("Resumed.")
-                    break
-                elif keyboard.is_pressed("esc"):
-                    print("Quitting...")
-                    quit()
+        
+        # stop calculation if we are in menu
         if  rt["IsRaceOn"] == 0:
             continue
         analyzeInput()
         makeDecision()
-        print(rt["TireSlipRatioFrontLeft"], rt["TireSlipRatioFrontRight"], rt["TireSlipRatioRearLeft"], rt["TireSlipRatioRearRight"], slip)
+        # print(rt["TireSlipRatioFrontLeft"], rt["TireSlipRatioFrontRight"], rt["TireSlipRatioRearLeft"], rt["TireSlipRatioRearRight"], slip)
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
 
 
