@@ -37,7 +37,7 @@ sizecount = 0
 # 1 index is : used in agressiveness increase decision
 # 2 index is : how quickly the aggressiveness lowers when driving calmly (1/value)
 # 3 index is : the bare minimum aggressiveness to keep at any given time
-gas_thresholds = [0.95, 0.4, 12, 0.1]  # Normal drive mode
+gas_thresholds = [0.95, 0.3, 12, 0.12]  # Normal drive mode
 
 
 # reading data and assigning names to data types in data_types dict. this is from official Forza Forum
@@ -193,8 +193,8 @@ def analyzeInput():
 
     # compute a new aggressiveness level depending on the gas and brake pedal pressure
     # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]
-    new_aggr = min(1,
-                    max((gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1]),
+    new_aggr =  min(1,
+                    max((gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1])*1.5,
                         (brake - (gas_thresholds[1] - 0.3)) / (gas_thresholds[0] - gas_thresholds[1]) * 1.6))
 
     # new_aggr = min(1, (gas - gas_thresholds[drive_mode][1]) / (gas_thresholds[drive_mode][0] - gas_thresholds[drive_mode][1]))
@@ -221,7 +221,7 @@ def analyzeInput():
 
     # adjust the allowed upshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeTop = idleRPM + 700 + ((maxShiftRPM - idleRPM - 400) * aggressiveness * 0.95)
+    rpmRangeTop = (idleRPM + 650 + ((maxShiftRPM - idleRPM - 400) * new_aggr * 0.95))
 
     # adjust the allowed downshifting rpm range,
     # depending on the aggressiveness
@@ -381,11 +381,11 @@ def mode_changer():
     if keyboard.is_pressed("7"):
         os.system("cls")
         print("Normal Mode")
-        gas_thresholds = [0.95, 0.6, 18, 0.1]
+        gas_thresholds = [0.95, 0.3, 12, 0.12]
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
-        gas_thresholds = [0.8, 0.3, 30, 0.6]
+        gas_thresholds = [0.8, 0.4, 24, 0.35]
     elif keyboard.is_pressed("9"):
         os.system("cls")
         print("Eco Mode")
@@ -400,17 +400,17 @@ def mode_selector():
         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
         os.system("cls")
         if answer == "s" or answer == "S":
-            gas_thresholds = [0.8, 0.3, 30, 0.6]  # Sports Mode
+            gas_thresholds = [0.8, 0.4, 24, 0.35]  # Sports Mode
         elif answer == "":
-            gas_thresholds = [0.95, 0.6, 18, 0.1]  # Normal Mode
+            gas_thresholds = [0.95, 0.3, 12, 0.12]  # Normal Mode
         elif answer == "e" or answer == "E":
-            gas_thresholds = [1, 0.45, 3, 0.05]  # Eco Mode
+            gas_thresholds = [1, 0.5, 6, 0.12]  # Eco Mode
 
-        if gas_thresholds == [0.95, 0.6, 18, 0.1]:  # Normal Mode
+        if gas_thresholds == [0.95, 0.3, 12, 0.12]:  # Normal Mode
             print("Normal Mode")
-        elif gas_thresholds == [0.8, 0.3, 30, 0.6]:  # Sports Mode
+        elif gas_thresholds == [0.8, 0.4, 24, 0.35]:  # Sports Mode
             print("Sports Mode")
-        elif gas_thresholds == [1, 0.45, 3, 0.05]:  # Eco Mode
+        elif gas_thresholds == [1, 0.5, 6, 0.12]:  # Eco Mode
             print("Eco Mode")
     except:
         os.system("cls")
