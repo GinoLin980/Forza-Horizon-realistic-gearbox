@@ -1,4 +1,4 @@
-# 2024/3/8 v1.2 Deleted DeltaT and added slip
+# 2024/3/19 v1.2 fix continuous downshift
 # The code of this project is mostly taken from other people's project. You can freely use and edit this code.
 import socket, struct, os
 import keyboard, time
@@ -198,7 +198,7 @@ def analyzeInput():
                         (brake - (gas_thresholds[1] - 0.3)) / (gas_thresholds[0] - gas_thresholds[1]) * 1.6))
 
     # new_aggr = min(1, (gas - gas_thresholds[drive_mode][1]) / (gas_thresholds[drive_mode][0] - gas_thresholds[drive_mode][1]))
-    # ex full accel: 1, (1 - 0.95) / (0.95 - 0.4)
+    # ex full accel: 1, (0.3 - 0.95) / (0.95 - 0.4)
     # 1, 0.05 / 0.55 = 0.09
 
     # if the newly computed agressiveness is higher than the previous one
@@ -221,7 +221,7 @@ def analyzeInput():
 
     # adjust the allowed upshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeTop = idleRPM + 500 + ((maxShiftRPM - idleRPM - 400) * aggressiveness * 0.95)
+    rpmRangeTop = idleRPM + 700 + ((maxShiftRPM - idleRPM - 400) * aggressiveness * 0.95)
 
     # adjust the allowed downshifting rpm range,
     # depending on the aggressiveness
@@ -321,12 +321,12 @@ def makeDecision():
         )
     ):
         # allow 3 times of downshift in a row
-        if downshift_count < 4 and gas > 0.6:
+        if downshift_count < 4 and gas > 0.75:
             waitTimeBetweenDownShifts = 0
             downshift_count += 1
             shiftDown()
             # prevent over down shifting
-            if rpm > rpmRangeSize * 2.5:
+            if rpm + 1200 > rpmRangeSize * 2.5:
                 downshift_count += 1
                 sizecount += 1
             return 
@@ -470,9 +470,8 @@ def main():
             continue
         analyzeInput()
         makeDecision()
-        print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize *2.5, sizecount)
+        print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize * 2.5, sizecount)
         
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
-
 
 main()
