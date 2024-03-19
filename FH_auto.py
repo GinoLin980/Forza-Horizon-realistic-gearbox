@@ -9,7 +9,6 @@ UDP_IP = "127.0.0.1"  # This sets server ip to localhost
 UDP_PORT = 8000  # You can freely edit this
 
 count = 0
-downshift_count = 0
 
 
 gear = 0
@@ -23,6 +22,7 @@ waitTimeBetweenDownShifts = 0.8
 lastShiftTime = 0
 lastShiftUpTime = 0
 lastShiftDownTime = 0
+continuous_down = False
 prevent = lastShiftDownTime + 1.2
 
 last_inc_aggr_time = 0
@@ -30,7 +30,7 @@ aggressiveness = 0
 
 
 sizecount = 0 
-
+times = 0
 
 # define the settings for different driving modes
 # 0 index is : used in agressiveness increase decision
@@ -187,7 +187,7 @@ def analyzeInput():
 
     rpmRangeTop = rt["EngineMaxRpm"]
     rpmRangeSize = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
-    maxShiftRPM = rt["EngineMaxRpm"] * 0.9  # change this value if it is not capable to upshift on your car, espacially for some trucks.
+    maxShiftRPM = rt["EngineMaxRpm"] * 0.86  # change this value if it is not capable to upshift on your car, espacially for some trucks.
     idleRPM = rt["EngineIdleRpm"]
     gear = rt["Gear"]
 
@@ -221,11 +221,11 @@ def analyzeInput():
 
     # adjust the allowed upshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeTop = (idleRPM + 650 + ((maxShiftRPM - idleRPM - 400) * new_aggr * 0.95))
+    rpmRangeTop = idleRPM + 1150 + ((maxShiftRPM - idleRPM - 300) * aggressiveness * 0.9)
 
     # adjust the allowed downshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeBottom = max(idleRPM + (min(gear, 6) * 50), rpmRangeTop - rpmRangeSize)
+    rpmRangeBottom = max(idleRPM + (min(gear, 6) * 70), rpmRangeTop - rpmRangeSize)
 
     if rt["TireSlipRatioFrontLeft"] > 1 or rt["TireSlipRatioFrontRight"] > 1 or rt["TireSlipRatioRearLeft"]  > 1 or rt["TireSlipRatioRearRight"] > 1:
         slip = True
@@ -233,20 +233,20 @@ def analyzeInput():
         slip = False
 
 def makeDecision():
-    global speed, rpm, gas, count, downshift_count, lastShiftDownTime, prevent, waitTimeBetweenDownShifts, sizecount
+    global speed, rpm, gas, count, continuous_down, lastShiftDownTime, prevent, waitTimeBetweenDownShifts, sizecount, times, gear
     
     speed = rt["Speed"]
     rpm = rt["CurrentEngineRpm"]
 
-    if downshift_count == 0:
+    if continuous_down == False:
         # when braking we allow quick followup of downshift, but not when accelerating
         if brake > 0:
             waitTimeBetweenDownShifts = 0.4
         elif brake == 0:
-            waitTimeBetweenDownShifts = 1.5
+            waitTimeBetweenDownShifts = 0.3
     # count means we can slowly accelerate like we do in real car
-    if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
-        count += 1
+    # if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
+    #     count += 1
     
 
     if (
@@ -291,7 +291,7 @@ def makeDecision():
 
         shiftUp()
         # reset the shift prevention time back to 1.2
-        prevent = lastShiftDownTime + 1.2
+        prevent = lastShiftDownTime + 2
 
     elif (
         # we have reached the lower rpm range (downshift are rpm-allowed)
@@ -321,28 +321,30 @@ def makeDecision():
         )
     ):
         # allow 3 times of downshift in a row
-        if downshift_count < 4 and gas > 0.75:
-            waitTimeBetweenDownShifts = 0
-            downshift_count += 1
-            shiftDown()
-            # prevent over down shifting
-            if rpm + 1200 > rpmRangeSize * 2.5:
-                downshift_count += 1
-                sizecount += 1
-            return 
-        # to allow consequent upshift 
-        if downshift_count >= 4:
+        if continuous_down == False and gas > 0.65 and rpm < rpmRangeSize * 2:
+            continuous_down = True
+            times = int((rpmRangeSize * 3.8) // rpm)
             prevent = 0
-            return
-        shiftDown()
+            for i in range(times):
+                    
+                    if gear > 2:
+                        time.sleep(0.03)
+                        shiftDown()
+                        gear -= 1
+                    else:
+                        return
+                    
+             
+        else:
+            shiftDown()
     
     # allow another continuous downshift after 4 sec
-    if time.time() > lastShiftDownTime + 1:
-        downshift_count = 0
+    if time.time() > lastShiftDownTime + 2:
+        continuous_down = False
     
     # reset the count after shifting or we are not in the condition anymore
-    if count >= 300 or ((time.time() > lastShiftTime + 5 and rpm < 1900) or gas > 0.3):
-        count = 0
+    # if count >= 300 or ((time.time() > lastShiftTime + 5 and rpm < 1900) or gas > 0.3):
+    #     count = 0
 
 def shiftUp():
     global lastShiftTime, lastShiftUpTime
@@ -385,11 +387,11 @@ def mode_changer():
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
-        gas_thresholds = [0.8, 0.4, 24, 0.35]
+        gas_thresholds = [0.8, 0.4, 24, 0.5]
     elif keyboard.is_pressed("9"):
         os.system("cls")
         print("Eco Mode")
-        gas_thresholds = [1, 0.45, 10, 0.05]
+        gas_thresholds = [1, 0.5, 3, 0]
     elif keyboard.is_pressed("0"):
         os.system("cls")
         print("Manual Mode")
@@ -400,17 +402,17 @@ def mode_selector():
         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
         os.system("cls")
         if answer == "s" or answer == "S":
-            gas_thresholds = [0.8, 0.4, 24, 0.35]  # Sports Mode
+            gas_thresholds = [0.8, 0.4, 24, 0.5]  # Sports Mode
         elif answer == "":
-            gas_thresholds = [0.95, 0.3, 12, 0.12]  # Normal Mode
+            gas_thresholds = [0.95, 0.5, 18, 0.12]  # Normal Mode
         elif answer == "e" or answer == "E":
-            gas_thresholds = [1, 0.5, 6, 0.12]  # Eco Mode
+            gas_thresholds = [1, 0.5, 3, 0]  # Eco Mode
 
-        if gas_thresholds == [0.95, 0.3, 12, 0.12]:  # Normal Mode
+        if gas_thresholds == [0.95, 0.5, 18, 0.12]:  # Normal Mode
             print("Normal Mode")
-        elif gas_thresholds == [0.8, 0.4, 24, 0.35]:  # Sports Mode
+        elif gas_thresholds == [0.8, 0.4, 24, 0.5]:  # Sports Mode
             print("Sports Mode")
-        elif gas_thresholds == [1, 0.5, 6, 0.12]:  # Eco Mode
+        elif gas_thresholds == [1, 0.5, 3, 0]:  # Eco Mode
             print("Eco Mode")
     except:
         os.system("cls")
@@ -470,8 +472,8 @@ def main():
             continue
         analyzeInput()
         makeDecision()
-        print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize * 2.5, sizecount)
-        
+        # print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize * 3.5, sizecount)
+        print(rpmRangeTop, rpmRangeSize, rpmRangeBottom, continuous_down, int((rpmRangeSize * 3.5) // rpm), rpm < rpmRangeSize * 2, times, gear)
         # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
 
 main()
