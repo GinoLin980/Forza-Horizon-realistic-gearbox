@@ -243,7 +243,7 @@ def makeDecision():
         if brake > 0:
             waitTimeBetweenDownShifts = 0.4
         elif brake == 0:
-            waitTimeBetweenDownShifts = 0.3
+            waitTimeBetweenDownShifts = 0.7
     # count means we can slowly accelerate like we do in real car
     # if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
     #     count += 1
@@ -283,7 +283,7 @@ def makeDecision():
         gas > 0
         and
         # we are above 15km/h # speed value in FH is really weird, 4 equals 15km/h
-        rt["Speed"] > 4
+        speed > 4
         # count means we can slowly accelerate like we do in real car
         or count == 300
     ):
@@ -336,7 +336,8 @@ def makeDecision():
                     else:
                         return
                     
-             
+        if continuous_down == True:
+            return
         else:
             shiftDown()
     
@@ -389,11 +390,11 @@ def mode_changer():
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
-        gas_thresholds = [0.8, 0.4, 24, 0.5]
+        gas_thresholds = [0.8, 0.4, 24, 0.35]
     elif keyboard.is_pressed("9"):
         os.system("cls")
         print("Eco Mode")
-        gas_thresholds = [1, 0.5, 3, 0]
+        gas_thresholds = [1, 0.5, 6, 0.12]
     elif keyboard.is_pressed("0"):
         os.system("cls")
         print("Manual Mode")
@@ -404,21 +405,21 @@ def mode_selector():
         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
         os.system("cls")
         if answer == "s" or answer == "S":
-            gas_thresholds = [0.8, 0.4, 24, 0.5]  # Sports Mode
+            gas_thresholds = [0.8, 0.4, 24, 0.35]  # Sports Mode
         elif answer == "":
-            gas_thresholds = [0.95, 0.5, 18, 0.12]  # Normal Mode
+            gas_thresholds = [0.95, 0.3, 12, 0.12]  # Normal Mode
         elif answer == "e" or answer == "E":
-            gas_thresholds = [1, 0.5, 3, 0]  # Eco Mode
+            gas_thresholds = [1, 0.5, 6, 0.12]  # Eco Mode
 
-        if gas_thresholds == [0.95, 0.5, 18, 0.12]:  # Normal Mode
+        if gas_thresholds == [0.95, 0.3, 12, 0.12]:  # Normal Mode
             print("Normal Mode")
-        elif gas_thresholds == [0.8, 0.4, 24, 0.5]:  # Sports Mode
+        elif gas_thresholds == [0.8, 0.4, 24, 0.35]:  # Sports Mode
             print("Sports Mode")
-        elif gas_thresholds == [1, 0.5, 3, 0]:  # Eco Mode
+        elif gas_thresholds == [1, 0.5, 6, 0.12]:  # Eco Mode
             print("Eco Mode")
     except:
         os.system("cls")
-        gas_thresholds = [0.95, 0.5, 18, 0.1]  # Normal Mode
+        gas_thresholds = [0.95, 0.3, 12, 0.12]  # Normal Mode
         print("Normal Mode")
 
 def pause():
