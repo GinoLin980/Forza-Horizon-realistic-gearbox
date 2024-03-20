@@ -324,6 +324,8 @@ def makeDecision():
         if continuous_down == False and gas > 0.65 and rpm < rpmRangeSize * 2:
             continuous_down = True
             times = int((rpmRangeSize * 3.8) // rpm)
+            
+            waitTimeBetweenDownShifts = 0
             prevent = 0
             for i in range(times):
                     
