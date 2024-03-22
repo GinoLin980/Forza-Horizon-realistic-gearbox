@@ -24,6 +24,7 @@ This project builds upon the work from:
 
 ## Setup Instructions
 - **Requirements**: **A controller or wheel is necessary.**
+- **Open Game**: Open up Forza Horizon 4/5
 - **Settings**: Ensure gear changing is set to manual and that `Q` and `E` keys can `shift down and up`, respectively.
 - **Data Output**: Configure the HUD and gameplay data output as follows:
   - IP Address: `127.0.0.1`
