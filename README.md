@@ -17,11 +17,6 @@ Check out the [Demonstration Video](https://youtu.be/YTiPrhIT0PM) to see the gea
 
 ### Big thanks to these bros, I can't make this without them. 🫶
 
-## Forked From
-This project builds upon the work from:
-- [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
-- [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
-
 ## Setup Instructions
 - **Requirements**: **A controller or wheel is necessary.**
 - **Open Game**: Open up Forza Horizon 4/5
@@ -29,6 +24,11 @@ This project builds upon the work from:
 - **Data Output**: Configure the HUD and gameplay data output as follows:
   - IP Address: `127.0.0.1`
   - Port: `8000`
+
+## Forked From
+This project builds upon the work from:
+- [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
+- [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
 
 
 ## Nexus Mod
