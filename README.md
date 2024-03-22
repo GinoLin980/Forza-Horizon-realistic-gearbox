@@ -15,12 +15,12 @@ Check out the [Demonstration Video](https://youtu.be/YTiPrhIT0PM) to see the gea
 - **Standard Users**: Simply download the `.exe` file and run it.
 - **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
 
+### Big thanks to these bros, I can't make this without them. 🫶
+
 ## Forked From
 This project builds upon the work from:
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
 - [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
-
-### Big thanks to these bros, I can't make this without them. 🫶
 
 ## Setup Instructions
 - **Requirements**: **A controller or wheel is necessary.**
