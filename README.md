@@ -15,6 +15,14 @@ Check out the [Demonstration Video](https://youtu.be/YTiPrhIT0PM) to see the gea
 - **Standard Users**: Simply download the `.exe` file and run it.
 - **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
 
+## Setup Instructions
+- **Requirements**: **A controller or wheel is necessary.**
+- **Open Game**: Open up Forza Horizon 4/5
+- **Settings**: Ensure gear changing is set to manual and that `Q` and `E` keys can `shift down and up`, respectively.
+- **Data Output**: Configure the HUD and gameplay data output as follows:
+  - IP Address: `127.0.0.1`
+  - Port: `8000`
+
 ## Forked From
 This project builds upon the work from:
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
@@ -22,12 +30,6 @@ This project builds upon the work from:
 
 ### Big thanks to these bros, I can't make this without them. 🫶
 
-## Setup Instructions
-- **Requirements**: **A controller or wheel is necessary.**
-- **Settings**: Ensure gear changing is set to manual and that `Q` and `E` keys can `shift down and up`, respectively.
-- **Data Output**: Configure the HUD and gameplay data output as follows:
-  - IP Address: `127.0.0.1`
-  - Port: `8000`
 
 
 ## Nexus Mod
