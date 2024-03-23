@@ -325,7 +325,6 @@ def makeDecision():
             continuous_down = True
             times = int((rpmRangeSize * 3.8) // rpm)
             
-            waitTimeBetweenDownShifts = 0
             prevent = 0
             for i in range(times):
                     
@@ -336,7 +335,8 @@ def makeDecision():
                     else:
                         return
                     
-             
+        if continuous_down == True and times > 0:
+            return
         else:
             shiftDown()
     
@@ -455,6 +455,7 @@ def main():
 
 
     while True:
+
         pause()
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
