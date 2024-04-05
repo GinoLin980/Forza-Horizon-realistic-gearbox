@@ -51,6 +51,7 @@ currentMode = "D"
 
 ### tkinter section
 root = tk.Tk()
+root.attributes("-topmost", True)
 s = ttk.Style()
 
 root.configure(background='black')
