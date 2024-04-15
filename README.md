@@ -37,7 +37,7 @@ Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/
 
 ## Support
 ### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
-**[Vote on Forza Forum to let us drive towards the horizon](https://forums.forza.net/t/realistic-shifting-in-forza-horizon-a-players-quest-for-realism/703018)**
+#### **[Vote on Forza Forum to let us drive towards the horizon](https://forums.forza.net/t/realistic-shifting-in-forza-horizon-a-players-quest-for-realism/703018)**
 
 ## Future Goals
 - [x] When coasting in high rpm and then full accelerate, it will sometimes upshift first and then downshift(maybe because the code detects too quickly)
