@@ -27,9 +27,9 @@ This project builds upon the work from:
 ### Big thanks to this bros, I can't make this without them. 🫶
 
 ## Develop Progress
-2024/4/19 - created `data_record.py` for recording data, and created ML model.
-2024/4/20 - created `FH_auto_ML.py` for implementing the model prediction to real action.
-2024/4/22 - fixed mathmetical problem of model's prediction. the model can train and predict correctly
+- 2024/4/19 - created `data_record.py` for recording data, and created ML model.
+- 2024/4/20 - created `FH_auto_ML.py` for implementing the model prediction to real action.
+- 2024/4/22 - fixed mathmetical problem of model's prediction. the model can train and predict correctly
 
 ## Future Goals
 - [ ] Data preparation.
