@@ -1,19 +1,16 @@
-# Realistic Gearbox for Forza Horizon 4/5
+# Realistic Gearbox for Forza Horizon 4/5 with Machine Learning
 
 ## Introduction
-This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox. It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
-
-## Demonstration
-Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gearbox in action!
+This is a branch of Realistic Gearbox for Forza Horizon, and focus on development of implementing machine learning for general compatibility and more life-like shifting.
 
 ## Features
 - **Shift like a REAL CAR**: Experience gear shifting just like you would in a real vehicle.
-- **Drive Mode Selection**: Choose between Normal, Sports, Eco, or Manual modes.
+- **General Compatibility**: Compatible with petrol, diesel, high rpm, low rpm cars.
 
 ## Installation     [![Github All Releases](https://img.shields.io/github/downloads/GinoLin980/Forza-Horizon-realistic-gearbox/total.svg)]()
 ### [Release Page](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)   
-- **Standard Users**: Simply download the `.exe` file and run it.
-- **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
+~~- **Standard Users**: Simply download the `.exe` file and run it.~~
+~~- **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.~~
 
 ## Setup Instructions
 - **Requirements**: **A controller or wheel is necessary.**
@@ -26,19 +23,20 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 ## Forked From
 This project builds upon the work from:
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
-- [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
 
-### Big thanks to these bros, I can't make this without them. 🫶
+### Big thanks to this bros, I can't make this without them. 🫶
 
+## Develop Progress
+2024/4/19 - created `data_record.py` for recording data, and created ML model.
+2024/4/20 - created `FH_auto_ML.py` for implementing the model prediction to real action.
+2024/4/22 - fixed mathmetical problem of model's prediction. the model can train and predict correctly
 
+## Future Goals
+- [ ] Data preparation.
 
 ## Nexus Mod
 Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/258/?tab=description)
 
 ## Support
 ### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
-### **[Vote on Forza Forum to let us drive towards the horizon](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463)**
 
-## Future Goals
-- [x] When coasting in high rpm and then full accelerate, it will sometimes upshift first and then downshift(maybe because the code detects too quickly)
-- [x] Parameter fine tune(gas_threshold)
