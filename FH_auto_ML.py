@@ -1,12 +1,14 @@
 import socket, struct
 import pandas as pd
 import time, keyboard, torch
-from pathlib import Path
 from torch import nn
+
 
 
 UDP_IP = "127.0.0.1"  # This sets server ip to localhost
 UDP_PORT = 8000  # You can freely edit this
+
+MODE = "Normal"
 
 gas = 0
 brake = 0
@@ -14,6 +16,7 @@ rpm_max = 0
 in_first_gear = 0
 in_overdrive = 0
 
+last_upshift = time.time() - 6
 jump_time = time.time() - 6
 count = 0
 
@@ -156,7 +159,7 @@ def get_data(data):
     #returns the dict
     return return_dict
 
-def analyze():
+def analyze_input():
     global gas, brake, rpm_max, in_first_gear, in_overdrive
     gas = rt["Accel"] / 255
     brake = rt["Brake"] / 255
@@ -164,6 +167,7 @@ def analyze():
     in_first_gear = 1 if rt["Gear"] == 1 else 0
     in_overdrive = 1 if rt["Gear"] > 4 else 0
 
+# Create a neural network model for evaluation
 class Net(nn.Module):
     def __init__(self):
         super().__init__()
@@ -182,19 +186,19 @@ class Net(nn.Module):
         shift = self.fc5(x)  # Predicts shift status
         jump = self.fc6(x)  # Predicts whether to jump gears or not
         return shift, jump
-    
-model = Net()
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind((UDP_IP, UDP_PORT))
 
-model.load_state_dict(torch.load('MODELS/first_comfort_model.pth'))
-last_upshift = time.time() - 6
+# create instance of the model and load model parameters    
+model = Net()
+model.load_state_dict(torch.load(f'MODELS/first_{MODE}_model.pth'))
 
 while True:
         data, addr = sock.recvfrom(1500)
         rt = get_data(data)
 
+        # stop calculation if not driving or cruising
         if rt["IsRaceOn"] == 0:
             continue
         if rt['Gear'] == 0:
@@ -204,18 +208,24 @@ while True:
         if rt["Accel"] / 255 == 0 and rt["Brake"] / 255 == 0:
             continue
 
+        # save resource by making model evaluation every 30 count
         count += 1
         # print('predicting...' if count % 30 == 0 else 'waiting...', end='\r')
-        if count % 30 == 0 and time.time() - last_upshift > 1: 
-            analyze()
+
+        if count % 30 == 0 and time.time() - last_upshift > 1: # prevent up-down-up-down
+            analyze_input()
             model.eval()
             with torch.no_grad():
                 shift_logit, jump_logit = model(torch.Tensor([[rpm_max, gas, brake, in_first_gear, in_overdrive]]))
                 
+                # making raw output into probability
                 shift_prob = torch.softmax(shift_logit, dim=1)
+                # and choose the highest probability
                 shift = torch.argmax(shift_prob, dim=1)
 
+                # making raw output into probability (in binary classification, sigmoid makes a number into float from 0 to 1)
                 jump_prob = torch.sigmoid(jump_logit)
+                # and choose the highest probability (round makes the number bigger than 0.5 into 1 and vice versa)
                 jump = torch.round(jump_prob).squeeze(dim=1)
                 print(shift, jump, rpm_max, end='\r')
 
