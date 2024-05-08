@@ -3,12 +3,14 @@
 import socket, struct, os
 import keyboard, time
 from inputimeout import inputimeout
-import tkinter as tk
-from tkinter import ttk
+import GUI
+
+VERSION = "v2.2"
 
 # initializing all the variables
 UDP_IP = "127.0.0.1"  # This sets server ip to localhost
 UDP_PORT = 8000  # You can freely edit this
+
 
 gas = 0
 brake = 0
@@ -45,64 +47,25 @@ gas_thresholds = MODES["Normal"]  # Normal drive mode
 current_drive_mode = "D"
 
 # for main func
-stop = False
+condition = {"stop": False, "UDP_started": False}
 
 shift_status = 0
 
 ### tkinter section
-root = tk.Tk()
-root.attributes("-topmost", True)
-root.overrideredirect(True)
-root.configure(background="black")
-s = ttk.Style()
-s.theme_use("alt")
-# gas bar
-s.configure("green.Horizontal.TProgressbar", thoughcolor="white", background="green")
-# brake bar
-s.configure("blue.Horizontal.TProgressbar", thoughcolor="white", background="red")
+APP = GUI.FHRG_GUI(condition=condition, VERSION=VERSION)
 
-def tkQuit():
-    global stop
-    os.system("cls")
-    stop = True
 
-def tkPack():
-    global gas_label, brake_label, gear_label, gas_progress, brake_progress, quitButton
-
-    root.title("Gas and Brake Progress Bars")
-
-    # Create gas progress bar
-    gas_label = tk.Label(root, text="Gas: 0%")
-    gas_label.pack()
-    gas_progress = ttk.Progressbar(
-        root,
-        style="green.Horizontal.TProgressbar",
-        orient="horizontal",
-        length=200,
-        mode="determinate",
-        maximum=1,
-    )
-    gas_progress.pack(padx=10, pady=5)
-
-    # Create brake progress bar
-    brake_label = tk.Label(root, text="Brake: 0%")
-    brake_label.pack()
-    brake_progress = ttk.Progressbar(
-        root,
-        style="blue.Horizontal.TProgressbar",
-        orient="horizontal",
-        length=200,
-        mode="determinate",
-        maximum=1,
-    )
-    brake_progress.pack(padx=10, pady=5)
-
-    gear_label = tk.Label(root, text="Gear: 0")
-    gear_label.pack()
-
-    quitButton = tk.Button(root, text="Quit", fg="white", bg="gray", command=tkQuit)
-    quitButton.pack()
-    updateDataForTk()
+def UDPconnectable(ip, port):
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1)  # Timeout after 1 second
+    try:
+        sock.connect((ip, port))
+        sock.shutdown(socket.SHUT_RDWR)
+        return True
+    except:
+        return False
+    finally:
+        sock.close()
 
 def updateDataForTk():
     # we don't analyze these var if we are in manual mode, so we get data again
@@ -122,7 +85,7 @@ def updateDataForTk():
     brake_progress["value"] = brake
 
     # Use after() to periodically call updateDataForTk() function
-    root.after(10, updateDataForTk)  # Update every second
+    APP.after(10, updateDataForTk)  # Update every second
 
 
 ### Horizon section
@@ -540,7 +503,7 @@ def pause():
                 break
             elif keyboard.is_pressed("esc"):
                 print("Quitting...")
-                stop = True
+                stop["stop"] = True
 
 def statement():
     print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
@@ -549,7 +512,7 @@ def statement():
     print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
 def main():
-    global rt, addr
+    global rt, addr, started
 
     # setting up an udp server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
@@ -558,6 +521,12 @@ def main():
     print("AND MAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
     print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
     print(f"AND THE PORT TO {UDP_PORT}")
+    APP.update()
+    while not UDPconnectable(UDP_IP, UDP_PORT):
+        if condition["stop"]:
+            quit()
+        APP.update()
+    condition["UDP_started"] = True
     sock.bind((UDP_IP, UDP_PORT))
     data, addr = sock.recvfrom(1500)
     rt = get_data(data)
@@ -567,9 +536,8 @@ def main():
 
     statement()
 
-    tkPack()
 
-    while stop == False:
+    while True:
         pause()
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
@@ -578,8 +546,10 @@ def main():
         # received data is now in the returned_data dict
         rt = get_data(data)
 
-        root.update_idletasks()
-        root.update()
+        if condition["stop"]:
+            quit()
+        APP.update_idletasks()
+        APP.update()
 
         # stop calculation if the mode is in manual
         if current_drive_mode == "M":
