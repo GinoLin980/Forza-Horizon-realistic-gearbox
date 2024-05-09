@@ -1,66 +1,132 @@
-# 2024/4/4 v2.1 fix continuous downshift
-# The code of this project is mostly taken from other people's project. You can freely use and edit this code.
+# 2024/4/17 v2.2 added high rpm hold when driving intensively with sports mode and beautified the code
+# By GinoLin980
 import socket, struct, os
 import keyboard, time
 from inputimeout import inputimeout
-import tkinter as tk
-from tkinter import ttk
+# import tkinter as tk
+# from tkinter import ttk
 
 # initializing all the variables
 UDP_IP = "127.0.0.1"  # This sets server ip to localhost
 UDP_PORT = 8000  # You can freely edit this
 
-count = 0
-
-
-gear = 0
 gas = 0
 brake = 0
+gear = 0
 rpm = 0
 speed = 0
 slip = False
 
-waitTimeBetweenDownShifts = 0.8
-lastShiftTime = 0
-lastShiftUpTime = 0
-lastShiftDownTime = 0
-continuous_down = False
-prevent = lastShiftDownTime + 1.2
+wait_time_between_downshifts = 0.8
+last_shift_time = 0
+last_upshift_time = 0
+last_downshift_time = 0
+kickdown = False
+jump_gears = 0
+sports_high_rpm = False
+sports_high_rpm_time = 0
+PREVENT = last_downshift_time + 1.2
 
-last_inc_aggr_time = 0
 aggressiveness = 0
-
-
-sizecount = 0 
-times = 0
+last_inc_aggr_time = 0
 
 # define the settings for different driving modes
-# 0 index is : used in agressiveness increase decision
-# 1 index is : used in agressiveness increase decision
+# 0 index is : used in aggressiveness increase decision
+# 1 index is : used in aggressiveness increase decision
 # 2 index is : how quickly the aggressiveness lowers when driving calmly (1/value)
 # 3 index is : the bare minimum aggressiveness to keep at any given time
-modes = {"Normal" : [0.95, 0.35, 12, 0.12],
-         "Sports" : [0.8, 0.4, 24, 0.35],
-         "Eco" : [1, 0.35, 6, 0.12],
-         "Manual" : [0, 0, 0 ,0]}
+MODES = {
+    "Normal": [0.95, 0.35, 12, 0.12],
+    "Sports": [0.8, 0.4, 24, 0.35],
+    "Eco": [1, 0.35, 6, 0.12],
+    "Manual": [0, 0, 0, 0]
+}
+gas_thresholds = MODES["Normal"]  # Normal drive mode
+current_drive_mode = "D"
 
-gas_thresholds = modes["Normal"]  # Normal drive mode
+# for main func
+stop = False
 
-currentMode = "D"
+shift_status = 0
+
+# ### tkinter section
+# root = tk.Tk()
+# root.attributes("-topmost", True)
+# root.overrideredirect(True)
+# root.configure(background="black")
+# s = ttk.Style()
+# s.theme_use("alt")
+# # gas bar
+# s.configure("green.Horizontal.TProgressbar", thoughcolor="white", background="green")
+# # brake bar
+# s.configure("blue.Horizontal.TProgressbar", thoughcolor="white", background="red")
+
+# def tkQuit():
+#     global stop
+#     os.system("cls")
+#     stop = True
+
+# def tkPack():
+#     global gas_label, brake_label, gear_label, gas_progress, brake_progress, quitButton
+
+#     root.title("Gas and Brake Progress Bars")
+
+#     # Create gas progress bar
+#     gas_label = tk.Label(root, text="Gas: 0%")
+#     gas_label.pack()
+#     gas_progress = ttk.Progressbar(
+#         root,
+#         style="green.Horizontal.TProgressbar",
+#         orient="horizontal",
+#         length=200,
+#         mode="determinate",
+#         maximum=1,
+#     )
+#     gas_progress.pack(padx=10, pady=5)
+
+#     # Create brake progress bar
+#     brake_label = tk.Label(root, text="Brake: 0%")
+#     brake_label.pack()
+#     brake_progress = ttk.Progressbar(
+#         root,
+#         style="blue.Horizontal.TProgressbar",
+#         orient="horizontal",
+#         length=200,
+#         mode="determinate",
+#         maximum=1,
+#     )
+#     brake_progress.pack(padx=10, pady=5)
+
+#     gear_label = tk.Label(root, text="Gear: 0")
+#     gear_label.pack()
+
+#     quitButton = tk.Button(root, text="Quit", fg="white", bg="gray", command=tkQuit)
+#     quitButton.pack()
+#     updateDataForTk()
+
+# def updateDataForTk():
+#     # we don't analyze these var if we are in manual mode, so we get data again
+#     gas = rt["Accel"] / 255
+#     brake = rt["Brake"] / 255
+#     gear = rt["Gear"]
+    
+#     gear_value = f"{current_drive_mode}{gear}" if gear != 0 else "R"
+
+#     # Update the labels
+#     gas_label.config(text=f"Gas: {int(gas * 100)}%", background="black", font=("Courier", 20), fg="white")
+#     brake_label.config(text=f"Brake: {int(brake * 100)}%", background="black", font=("Courier", 20), fg="white")
+#     gear_label.config(text=f"Gear: {gear_value}", background="black", font=("Courier", 20), fg="white")
+#     quitButton.config(text="Quit", fg="white", bg="gray", command=tkQuit)
+#     # Update the progress bars
+#     gas_progress["value"] = gas
+#     brake_progress["value"] = brake
+
+#     # Use after() to periodically call updateDataForTk() function
+#     root.after(10, updateDataForTk)  # Update every second
 
 
-### tkinter section
-root = tk.Tk()
-root.attributes("-topmost", True)
-s = ttk.Style()
-
-root.configure(background='black')
-s.theme_use('alt')
-# gas bar
-s.configure('green.Horizontal.TProgressbar', thoughcolor='white', background='green')
-# brake bar
-s.configure('blue.Horizontal.TProgressbar', thoughcolor='white', background='red')
-
+### Horizon section
+## get data 
 # reading data and assigning names to data types in data_types dict. this is from official Forza Forum
 data_types = {
     "IsRaceOn": "s32",
@@ -151,7 +217,6 @@ data_types = {
     "NormalizedAIBrakeDifference": "s8",
 }
 
-
 # assigning sizes in bytes to each variable type
 jumps = {
     "s32": 4,  # Signed 32bit int, 4 bytes of size
@@ -162,7 +227,6 @@ jumps = {
     "s8": 1,  # Signed 8bit int
     "hzn": 12,  # Unknown, 12 bytes of.. something
 }
-
 
 def get_data(data):
     return_dict = {}
@@ -198,38 +262,43 @@ def get_data(data):
     # returns the dict
     return return_dict
 
+## analyze and decision section
 def analyzeInput():
     # if you need other types of data, they can be found at the dict data_types
-    global aggressiveness, last_inc_aggr_time, rpmRangeBottom, gas, brake, rpmRangeTop, rpmRangeBottom, rpmRangeSize, gear, idleRPM, slip
-
-    # transform gas value into 0 to 1, because the original code is designed for Assetto Corsa
+    global gas, brake, gear, slip, idleRPM, kickdown, max_shift_rpm, shift_status, rpm_range_size, rpm_range_top, rpm_range_bottom,  aggressiveness, last_inc_aggr_time, sports_high_rpm, sports_high_rpm_time
+    shift_status = 0
+    # transform gas and value into 0 to 1
     gas = rt["Accel"] / 255
     brake = rt["Brake"] / 255
-
-    rpmRangeTop = rt["EngineMaxRpm"]
-    rpmRangeSize = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
-    maxShiftRPM = rt["EngineMaxRpm"] * 0.86  # change this value if it is not capable to upshift on your car, espacially for some trucks.
-    idleRPM = rt["EngineIdleRpm"]
     gear = rt["Gear"]
+
+    idleRPM = rt["EngineIdleRpm"]
+    rpm_range_size = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
+    rpm_range_top = rt["EngineMaxRpm"]
+    max_shift_rpm = rt["EngineMaxRpm"] * 0.86  # change this value if it is not capable to upshift on your car, especially for some trucks.
 
     # compute a new aggressiveness level depending on the gas and brake pedal pressure
     # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]
-    new_aggr =  min(1,
-                    max((gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1])*1.5,
-                        (brake - (gas_thresholds[1] - 0.3)) / (gas_thresholds[0] - gas_thresholds[1]) * 1.6))
+    new_aggr = min(
+        1,
+        max(
+            (gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1]) * 1.5,
+            (brake - (gas_thresholds[1] - 0.3)) / (gas_thresholds[0] - gas_thresholds[1]) * 1.6
+        )
+    )
 
     # new_aggr = min(1, (gas - gas_thresholds[drive_mode][1]) / (gas_thresholds[drive_mode][0] - gas_thresholds[drive_mode][1]))
-    # ex full accel: 1, (0.3 - 0.95) / (0.95 - 0.4)
-    # 1, 0.05 / 0.55 = 0.09
+    # ex full accel: 1, (1 - 0.35) / (0.95 - 0.35)*1.5
+    # 1, 1.083
 
-    # if the newly computed agressiveness is higher than the previous one
+    # if the newly computed aggressiveness is higher than the previous one
     if new_aggr > aggressiveness and gear > 0:
         # we update it with the new one
         aggressiveness = new_aggr
         # and save the time at which we updated it
         last_inc_aggr_time = time.time()
 
-    # if we have not increased the agressiveness for at least 2 seconds
+    # if we have not increased the aggressiveness for at least 4 seconds
     if time.time() > last_inc_aggr_time + 4:
         # we lower the aggressiveness by a factor given by the current driving move
         aggressiveness -= 1 / gas_thresholds[2]
@@ -237,65 +306,81 @@ def analyzeInput():
     # we maintain a minimum aggressiveness defined by the current driving mode
     # it's only used by the sport mode, to maintain the aggressiveness always above 0.5
     # all other driving modes will use the actual computed aggressiveness
-    # (which can be bellow 0.5)
+    # (which can be below 0.5)
     aggressiveness = max(aggressiveness, gas_thresholds[3])
 
     # adjust the allowed upshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeTop = idleRPM + 950 + ((maxShiftRPM - idleRPM - 300) * aggressiveness * 0.9)
+    rpm_range_top = idleRPM + 950 + ((max_shift_rpm - idleRPM - 300) * aggressiveness * 0.9)
 
     # adjust the allowed downshifting rpm range,
     # depending on the aggressiveness
-    rpmRangeBottom = max(idleRPM + (min(gear, 6) * 70), rpmRangeTop - rpmRangeSize)
+    rpm_range_bottom = max(idleRPM + (min(gear, 6) * 70), rpm_range_top - rpm_range_size)
 
-    if rt["TireSlipRatioFrontLeft"] > 1 or rt["TireSlipRatioFrontRight"] > 1 or rt["TireSlipRatioRearLeft"]  > 1 or rt["TireSlipRatioRearRight"] > 1:
+    if (
+           rt["TireSlipRatioFrontLeft"] > 1
+        or rt["TireSlipRatioFrontRight"] > 1
+        or rt["TireSlipRatioRearLeft"] > 1
+        or rt["TireSlipRatioRearRight"] > 1
+    ):
         slip = True
     else:
         slip = False
 
+    # (intense driving situation)
+    # if we are in sports mode and the gas input is more than 60%, we want it to maintain at high rpm but not upshift when given little gas.
+    if current_drive_mode == "S" and gas > 0.6:
+        sports_high_rpm = True
+        sports_high_rpm_time = time.time()
+    # and reset it after 5 sec.
+    if time.time() - sports_high_rpm_time > 5:
+        sports_high_rpm = False
+        
+    # allow another continuous downshift after 2 sec
+    if time.time() > last_downshift_time + 2:
+        kickdown = False
+
+
 def makeDecision():
-    global speed, rpm, gas, count, continuous_down, lastShiftDownTime, prevent, waitTimeBetweenDownShifts, sizecount, times, gear
-    
+    global gear, rpm, speed, kickdown, jump_gears, PREVENT, last_downshift_time, wait_time_between_downshifts
+
     speed = rt["Speed"]
     rpm = rt["CurrentEngineRpm"]
 
-    if continuous_down == False:
+    if kickdown == False:
         # when braking we allow quick followup of downshift, but not when accelerating
         if brake > 0:
-            waitTimeBetweenDownShifts = 0.4
+            wait_time_between_downshifts = 0.2
         elif brake == 0:
-            waitTimeBetweenDownShifts = 0.7
-    # count means we can slowly accelerate like we do in real car
-    # if rpm > rpmRangeTop - 700 and rpm > 700 and rt["Speed"] > 5 and gas > 0:
-    #     count += 1
-    
+            wait_time_between_downshifts = 0.7
 
+    ## gear changing section
+    # not changing gear
     if (
         # we have already shifted in the last 0.1s
-        time.time() < lastShiftTime + 0.1
+        time.time() < last_shift_time + 0.1
         or
-        # or we are in neutral
+        # or we are in neutral or reverse
         gear < 1
         or
         # or we have already shifted up in the last 1.3 sec
-        time.time() < lastShiftUpTime + 1.3
+        time.time() < last_upshift_time + 1.3
         or
-        # or we have already shifted down in the last 1.5 sec
-        time.time() < lastShiftDownTime + waitTimeBetweenDownShifts
-    ):
-
-        # do not change gear
+        # or we have already shifted down in the last 0.7 sec
+        time.time() < last_downshift_time + wait_time_between_downshifts
+    ):  # do not change gear
         return
-    
+
+    # upshift logic
     if (
         # we have reached the top range (upshift are rpm-allowed)
-        rpm > rpmRangeTop
+        rpm > rpm_range_top
         and
         # we are not slipping
         not slip
         and
         # we have not downshifted in the last 1.2 sec (to prevent up-down-up-down-up-down)
-        time.time() > prevent
+        time.time() > PREVENT
         and
         # we are not on the brakes
         brake == 0
@@ -308,201 +393,166 @@ def makeDecision():
         # count means we can slowly accelerate like we do in real car
         # or count == 300
     ):
+        # if we are in high rpm(normally 5X00 rpm) and lower than the maximum rpm, have been intensively driving and in sports mode.
+        if rpm > rpm_range_size * 2 and rpm < max_shift_rpm - 500 and sports_high_rpm:
+            if current_drive_mode == "S":
+                return
+        
         # actually UPSHIFT
-
         shiftUp()
         # reset the shift prevention time back to 1.2
-        prevent = lastShiftDownTime + 2
+        PREVENT = last_downshift_time + 1.2
 
+    # downshift logic
     elif (
         # we have reached the lower rpm range (downshift are rpm-allowed)
-        rpm < rpmRangeBottom
-        and
+        rpm < rpm_range_bottom
+        and 
         not slip
         and
         # we are not in first gear (meaning we have gears available bellow us)
         gear > 1
         and
-        # we have not downshifted in the last 2 sec
-        time.time() > lastShiftDownTime + waitTimeBetweenDownShifts
+        # we have not downshifted in the last 0.7 sec
+        time.time() > last_downshift_time + wait_time_between_downshifts
+        and
+        # prevent from over downshift 
+        not rpm > rpm_range_size * 2.3
         and
         # depending on which gears we'll end up into
         (
             # we are NOT about to downshift into 1st, we can allow it
             gear > 2
-            
             or (
-                # we must be very vert aggressive to allow that to happen 
+                # we must be very very aggressive to allow that to happen
                 # or be very very slow (less than 15km/h, which is always ok)
-                # we are about to downshift into 1st. 
+                # we are about to downshift into 1st.
                 (gear == 2 and (aggressiveness >= 0.95 or speed <= 4))
-                # we are in an overdrive gear # we are braking       
-                or (gear >= 4 and brake > 0) 
+                # we are in an overdrive gear # we are braking
+                or (gear >= 4 and brake > 0)
             )
         )
     ):
-        # allow 3 times of downshift in a row
-        if continuous_down == False and gas > 0.65 and rpm < rpmRangeSize * 2:
-            continuous_down = True
-            times = int((rpmRangeSize * 3.8) // rpm)
-            
-            prevent = 0
-            for i in range(times):
-                    
-                    if gear > 2:
-                        time.sleep(0.03)
-                        shiftDown()
-                        gear -= 1
-                    else:
-                        return
-        if continuous_down is True:
+        # allow several times of downshift in a row if we are giving heavy gas at low rpm
+        if kickdown == False and gas > 0.65 and rpm < rpm_range_size * 2 and gear >  4:
+            kickdown = True
+            PREVENT = 0
+            jump_gears = int((rpm_range_size * 3.8) // rpm)
+            for i in range(jump_gears):
+                #prevent from jumping too many gears
+                if gear > 2:
+                    shiftDown()
+                    time.sleep(0.03)
+                    gear -= 1
+                else:
+                    return
+        # ignore if we are kicking down, we put it here but not in not changing gears for allowing upshift and ignore the downshift below
+        if kickdown is True:
             return
         else:
             shiftDown()
-    
-    # allow another continuous downshift after 4 sec
-    if time.time() > lastShiftDownTime + 2:
-        continuous_down = False
-    
-    # reset the count after shifting or we are not in the condition anymore
-    # if count >= 300 or ((time.time() > lastShiftTime + 5 and rpm < 1900) or gas > 0.3):
-    #     count = 0
+
 
 def shiftUp():
-    global lastShiftTime, lastShiftUpTime
+    global last_shift_time, last_upshift_time, shift_status
 
     # shift up by press e
     keyboard.press_and_release("e")
     # update the last shifting times
-    lastShiftTime = time.time()
-    lastShiftUpTime = time.time()
+    last_shift_time = time.time()
+    last_upshift_time = time.time()
+    shift_status = 1
+
 
 def shiftDown():
-    global lastShiftTime, lastShiftDownTime
+    global last_shift_time, last_downshift_time, shift_status
 
     # shift down by press q
     keyboard.press_and_release("q")
     # update the last shifting times
-    lastShiftTime = time.time()
-    lastShiftDownTime = time.time()
+    last_shift_time = time.time()
+    last_downshift_time = time.time()
+    shift_status = -1
 
-def statement():
-    # Choosing modes in terminal
-    print("Timeout is 10 seconds")
-    print("Type in S to have Sports Mode")
-    print("Type in e to have Eco Mode")
-    print("Enter to have Normal Mode")
-    print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
-    print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
-    
-    mode_selector()
-    print("press ` (under the esc) to stop the program")
-    print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
-# to change the drive mode
+# to change the drive mode during drive
 def mode_changer():
-    global gas_thresholds
+    global gas_thresholds, current_drive_mode
     if keyboard.is_pressed("7"):
         os.system("cls")
         print("Normal Mode")
-        currentMode = "D"
-        gas_thresholds = modes["Normal"]
+        current_drive_mode = "D"
+        gas_thresholds = MODES["Normal"]
     elif keyboard.is_pressed("8"):
         os.system("cls")
         print("Sports Mode")
-        currentMode = "S"
-        gas_thresholds = modes["Sports"]
+        current_drive_mode = "S"
+        gas_thresholds = MODES["Sports"]
     elif keyboard.is_pressed("9"):
         os.system("cls")
         print("Eco Mode")
-        currentMode = "E"
-        gas_thresholds = modes["Eco"]
+        current_drive_mode = "E"
+        gas_thresholds = MODES["Eco"]
     elif keyboard.is_pressed("0"):
         os.system("cls")
         print("Manual Mode")
-        currentMode = "M"
-        gas_thresholds = modes["Manual"]
+        current_drive_mode = "M"
+        gas_thresholds = MODES["Manual"]
 
+# select model in the beginning of the program
 def mode_selector():
+    global current_drive_mode, gas_thresholds
     try:
         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
         os.system("cls")
         if answer == "":
-            gas_thresholds = modes["Normal"]  # Normal Mode
+            gas_thresholds = MODES["Normal"]  # Normal Mode
             print("Normal Mode")
-            currentMode = "D"
+            current_drive_mode = "D"
         elif answer == "s" or answer == "S":
-            gas_thresholds = modes["Sports"]  # Sports Mode
+            gas_thresholds = MODES["Sports"]  # Sports Mode
             print("Sports Mode")
-            currentMode = "S"
+            current_drive_mode = "S"
         elif answer == "e" or answer == "E":
-            gas_thresholds = modes["Eco"]  # Eco Mode
+            gas_thresholds = MODES["Eco"]  # Eco Mode
             print("Eco Mode")
-            currentMode = "E"
+            current_drive_mode = "E"
         elif answer == "m" or answer == "M":
-            gas_thresholds = modes["Manual"]  # Eco Mode
+            gas_thresholds = MODES["Manual"]  # Eco Mode
             print("Manual Mode")
-            currentMode = "M"
+            current_drive_mode = "M"
     except:
         os.system("cls")
-        gas_thresholds = modes["Normal"]  # Normal Mode
+        gas_thresholds = MODES["Normal"]  # Normal Mode
         print("Normal Mode")
-        currentMode = "D"
+        current_drive_mode = "D"
+
 
 def pause():
+    global stop
     if keyboard.is_pressed("`"):
-            os.system("cls")
-            print("You stopped the program, press \\ again to resume.")
-            print("press ESC to quit the program")
-            while True:
-                if keyboard.is_pressed("\\"):
-                    print("Resumed.")
-                    break
-                elif keyboard.is_pressed("esc"):
-                    print("Quitting...")
-                    quit()
+        os.system("cls")
+        print("You stopped the program, press \\ again to resume.")
+        print("press ESC to quit the program")
+        while True:
+            if keyboard.is_pressed("\\"):
+                print("Resumed.")
+                break
+            elif keyboard.is_pressed("esc"):
+                print("Quitting...")
+                stop = True
 
-def tkPack():
-    root.title("Gas and Brake Progress Bars")
-
-    # Create gas progress bar
-    gas_label = tk.Label(root, text="Gas: 0%")
-    gas_label.pack()
-    gas_progress = ttk.Progressbar(root, style='green.Horizontal.TProgressbar', orient="horizontal", length=200, mode="determinate", maximum=1)
-    gas_progress.pack(padx=10,pady=5)
-
-    # Create brake progress bar
-    brake_label = tk.Label(root, text="Brake: 0%")
-    brake_label.pack()
-    brake_progress = ttk.Progressbar(root, style='blue.Horizontal.TProgressbar', orient="horizontal", length=200, mode="determinate", maximum=1)
-    brake_progress.pack(padx=10,pady=5)
-
-    gear_label = tk.Label(root, text="Gear: 0")
-    gear_label.pack()
-    
-    def update_data():
-        gear_value = F"{currentMode}{gear}" if gear != 0 else "R"
-        # Update the labels
-        gas_label.config(text=f"Gas: {int(gas * 100)}%", background='black', font=('Courier', 20), fg='white')
-        brake_label.config(text=f"Brake: {int(brake * 100)}%", background='black', font=('Courier', 20), fg='white')
-        gear_label.config(text=F"Gear: {gear_value}", background='black', font=('Courier', 20), fg='white')
-        # Update the progress bars
-        gas_progress["value"] = gas
-        brake_progress["value"] = brake
-
-        # Use after() to periodically call update_data() function
-        root.after(10, update_data)  # Update every second
-    
-    # Start updating the progress bars periodically
-    update_data()
-
+def statement():
+    print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
+    print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
+    print("press ` (under the esc) to stop the program")
+    print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
 def main():
     global rt, addr
 
     # setting up an udp server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
-    
 
     print(f"PLEASE OPEN UP THE GAME FIRST")
     print("AND MAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
@@ -511,39 +561,37 @@ def main():
     sock.bind((UDP_IP, UDP_PORT))
     data, addr = sock.recvfrom(1500)
     rt = get_data(data)
+    
     os.system("cls")
-    print("WORKED")
+    print("WORKED\n\n")
 
     statement()
 
+    # tkPack()
 
-    while True:
-
+    while stop == False:
         pause()
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
-        # stop calculation if the mode is in manual
-        if gas_thresholds == [0, 0, 0, 0] :
-            continue
-        
 
-        
         data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
-
-        # received data is now in the retuturned_data dict
+        # received data is now in the returned_data dict
         rt = get_data(data)
 
-        root.update_idletasks()
-        root.update()
-        
-        # stop calculation if we are in menu
-        if  rt["IsRaceOn"] == 0:
+        # root.update_idletasks()
+        # root.update()
+
+        # stop calculation if the mode is in manual
+        if current_drive_mode == "M":
             continue
+        # stop calculation if we are in menu or not driving
+        if rt["IsRaceOn"] == 0:
+            continue
+        
+        
+        # actually compute and make decision
         analyzeInput()
         makeDecision()
         
-        # print(waitTimeBetweenDownShifts, downshift_count, rpmRangeSize * 3.5, sizecount)
-        # print(rpmRangeTop, rpmRangeSize, rpmRangeBottom, continuous_down, int((rpmRangeSize * 3.5) // rpm), rpm < rpmRangeSize * 2, times, gear)
-        # print(f"{round(rpmRangeTop, 2)} | RPM {round(rpm, 2)} | {round(rpmRangeTop - 600, 2)} | {count} | {round(gas, 2)}")# monitor the current status(i don't know how to use graphic interface :(   )
-
-main()
+if __name__ == "__main__":
+    main()
