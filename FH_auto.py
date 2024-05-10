@@ -1,10 +1,19 @@
-# 2024/4/17 v2.2 added high rpm hold when driving intensively with sports mode and beautified the code
+# 2024/5/9 v2.3 updated with custom tkinter
 # By GinoLin980
-import socket, struct, os
+import sys; sys.dont_write_bytecode = True
+import socket, os
 import keyboard, time
 from inputimeout import inputimeout
-# import tkinter as tk
-# from tkinter import ttk
+from DATAOUT import *
+import GUI
+
+try:
+    import pyi_splash
+    pyi_splash.close()
+except ImportError:
+    pass
+
+VERSION = "v2.3"
 
 # initializing all the variables
 UDP_IP = "127.0.0.1"  # This sets server ip to localhost
@@ -44,224 +53,11 @@ MODES = {
 gas_thresholds = MODES["Normal"]  # Normal drive mode
 current_drive_mode = "D"
 
-# for main func
-stop = False
-
-shift_status = 0
-
-# ### tkinter section
-# root = tk.Tk()
-# root.attributes("-topmost", True)
-# root.overrideredirect(True)
-# root.configure(background="black")
-# s = ttk.Style()
-# s.theme_use("alt")
-# # gas bar
-# s.configure("green.Horizontal.TProgressbar", thoughcolor="white", background="green")
-# # brake bar
-# s.configure("blue.Horizontal.TProgressbar", thoughcolor="white", background="red")
-
-# def tkQuit():
-#     global stop
-#     os.system("cls")
-#     stop = True
-
-# def tkPack():
-#     global gas_label, brake_label, gear_label, gas_progress, brake_progress, quitButton
-
-#     root.title("Gas and Brake Progress Bars")
-
-#     # Create gas progress bar
-#     gas_label = tk.Label(root, text="Gas: 0%")
-#     gas_label.pack()
-#     gas_progress = ttk.Progressbar(
-#         root,
-#         style="green.Horizontal.TProgressbar",
-#         orient="horizontal",
-#         length=200,
-#         mode="determinate",
-#         maximum=1,
-#     )
-#     gas_progress.pack(padx=10, pady=5)
-
-#     # Create brake progress bar
-#     brake_label = tk.Label(root, text="Brake: 0%")
-#     brake_label.pack()
-#     brake_progress = ttk.Progressbar(
-#         root,
-#         style="blue.Horizontal.TProgressbar",
-#         orient="horizontal",
-#         length=200,
-#         mode="determinate",
-#         maximum=1,
-#     )
-#     brake_progress.pack(padx=10, pady=5)
-
-#     gear_label = tk.Label(root, text="Gear: 0")
-#     gear_label.pack()
-
-#     quitButton = tk.Button(root, text="Quit", fg="white", bg="gray", command=tkQuit)
-#     quitButton.pack()
-#     updateDataForTk()
-
-# def updateDataForTk():
-#     # we don't analyze these var if we are in manual mode, so we get data again
-#     gas = rt["Accel"] / 255
-#     brake = rt["Brake"] / 255
-#     gear = rt["Gear"]
-    
-#     gear_value = f"{current_drive_mode}{gear}" if gear != 0 else "R"
-
-#     # Update the labels
-#     gas_label.config(text=f"Gas: {int(gas * 100)}%", background="black", font=("Courier", 20), fg="white")
-#     brake_label.config(text=f"Brake: {int(brake * 100)}%", background="black", font=("Courier", 20), fg="white")
-#     gear_label.config(text=f"Gear: {gear_value}", background="black", font=("Courier", 20), fg="white")
-#     quitButton.config(text="Quit", fg="white", bg="gray", command=tkQuit)
-#     # Update the progress bars
-#     gas_progress["value"] = gas
-#     brake_progress["value"] = brake
-
-#     # Use after() to periodically call updateDataForTk() function
-#     root.after(10, updateDataForTk)  # Update every second
+# A dictionary for that stores settings across the python files
+condition = {"stop": False, "UDP_started": False, "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0}
 
 
 ### Horizon section
-## get data 
-# reading data and assigning names to data types in data_types dict. this is from official Forza Forum
-data_types = {
-    "IsRaceOn": "s32",
-    "TimestampMS": "u32",
-    "EngineMaxRpm": "f32",
-    "EngineIdleRpm": "f32",
-    "CurrentEngineRpm": "f32",
-    "AccelerationX": "f32",
-    "AccelerationY": "f32",
-    "AccelerationZ": "f32",
-    "VelocityX": "f32",
-    "VelocityY": "f32",
-    "VelocityZ": "f32",
-    "AngularVelocityX": "f32",
-    "AngularVelocityY": "f32",
-    "AngularVelocityZ": "f32",
-    "Yaw": "f32",
-    "Pitch": "f32",
-    "Roll": "f32",
-    "NormalizedSuspensionTravelFrontLeft": "f32",
-    "NormalizedSuspensionTravelFrontRight": "f32",
-    "NormalizedSuspensionTravelRearLeft": "f32",
-    "NormalizedSuspensionTravelRearRight": "f32",
-    "TireSlipRatioFrontLeft": "f32",
-    "TireSlipRatioFrontRight": "f32",
-    "TireSlipRatioRearLeft": "f32",
-    "TireSlipRatioRearRight": "f32",
-    "WheelRotationSpeedFrontLeft": "f32",
-    "WheelRotationSpeedFrontRight": "f32",
-    "WheelRotationSpeedRearLeft": "f32",
-    "WheelRotationSpeedRearRight": "f32",
-    "WheelOnRumbleStripFrontLeft": "s32",
-    "WheelOnRumbleStripFrontRight": "s32",
-    "WheelOnRumbleStripRearLeft": "s32",
-    "WheelOnRumbleStripRearRight": "s32",
-    "WheelInPuddleDepthFrontLeft": "f32",
-    "WheelInPuddleDepthFrontRight": "f32",
-    "WheelInPuddleDepthRearLeft": "f32",
-    "WheelInPuddleDepthRearRight": "f32",
-    "SurfaceRumbleFrontLeft": "f32",
-    "SurfaceRumbleFrontRight": "f32",
-    "SurfaceRumbleRearLeft": "f32",
-    "SurfaceRumbleRearRight": "f32",
-    "TireSlipAngleFrontLeft": "f32",
-    "TireSlipAngleFrontRight": "f32",
-    "TireSlipAngleRearLeft": "f32",
-    "TireSlipAngleRearRight": "f32",
-    "TireCombinedSlipFrontLeft": "f32",
-    "TireCombinedSlipFrontRight": "f32",
-    "TireCombinedSlipRearLeft": "f32",
-    "TireCombinedSlipRearRight": "f32",
-    "SuspensionTravelMetersFrontLeft": "f32",
-    "SuspensionTravelMetersFrontRight": "f32",
-    "SuspensionTravelMetersRearLeft": "f32",
-    "SuspensionTravelMetersRearRight": "f32",
-    "CarOrdinal": "s32",
-    "CarClass": "s32",
-    "CarPerformanceIndex": "s32",
-    "DrivetrainType": "s32",
-    "NumCylinders": "s32",
-    "HorizonPlaceholder": "hzn",
-    "PositionX": "f32",
-    "PositionY": "f32",
-    "PositionZ": "f32",
-    "Speed": "f32",
-    "Power": "f32",
-    "Torque": "f32",
-    "TireTempFrontLeft": "f32",
-    "TireTempFrontRight": "f32",
-    "TireTempRearLeft": "f32",
-    "TireTempRearRight": "f32",
-    "Boost": "f32",
-    "Fuel": "f32",
-    "DistanceTraveled": "f32",
-    "BestLap": "f32",
-    "LastLap": "f32",
-    "CurrentLap": "f32",
-    "CurrentRaceTime": "f32",
-    "LapNumber": "u16",
-    "RacePosition": "u8",
-    "Accel": "u8",
-    "Brake": "u8",
-    "Clutch": "u8",
-    "HandBrake": "u8",
-    "Gear": "u8",
-    "Steer": "s8",
-    "NormalizedDrivingLine": "s8",
-    "NormalizedAIBrakeDifference": "s8",
-}
-
-# assigning sizes in bytes to each variable type
-jumps = {
-    "s32": 4,  # Signed 32bit int, 4 bytes of size
-    "u32": 4,  # Unsigned 32bit int
-    "f32": 4,  # Floating point 32bit
-    "u16": 2,  # Unsigned 16bit int
-    "u8": 1,  # Unsigned 8bit int
-    "s8": 1,  # Signed 8bit int
-    "hzn": 12,  # Unknown, 12 bytes of.. something
-}
-
-def get_data(data):
-    return_dict = {}
-
-    # additional var
-    passed_data = data
-
-    for i in data_types:
-        d_type = data_types[i]  # checks data type (s32, u32 etc.)
-        jump = jumps[d_type]  # gets size of data
-        current = passed_data[:jump]  # gets data
-
-        decoded = 0
-        # complicated decoding for each type of data
-        if d_type == "s32":
-            decoded = int.from_bytes(current, byteorder="little", signed=True)
-        elif d_type == "u32":
-            decoded = int.from_bytes(current, byteorder="little", signed=False)
-        elif d_type == "f32":
-            decoded = struct.unpack("f", current)[0]
-        elif d_type == "u16":
-            decoded = struct.unpack("H", current)[0]
-        elif d_type == "u8":
-            decoded = struct.unpack("B", current)[0]
-        elif d_type == "s8":
-            decoded = struct.unpack("b", current)[0]
-
-        # adds decoded data to the dict
-        return_dict[i] = decoded
-        # removes already read bytes from the variable
-        passed_data = passed_data[jump:]
-
-    # returns the dict
-    return return_dict
-
 ## analyze and decision section
 def analyzeInput():
     # if you need other types of data, they can be found at the dict data_types
@@ -461,7 +257,6 @@ def shiftUp():
     # update the last shifting times
     last_shift_time = time.time()
     last_upshift_time = time.time()
-    shift_status = 1
 
 
 def shiftDown():
@@ -472,114 +267,132 @@ def shiftDown():
     # update the last shifting times
     last_shift_time = time.time()
     last_downshift_time = time.time()
-    shift_status = -1
 
 
 # to change the drive mode during drive
 def mode_changer():
     global gas_thresholds, current_drive_mode
     if keyboard.is_pressed("7"):
-        os.system("cls")
-        print("Normal Mode")
+        # os.system("cls")
+        # print("Normal Mode")
         current_drive_mode = "D"
         gas_thresholds = MODES["Normal"]
     elif keyboard.is_pressed("8"):
-        os.system("cls")
-        print("Sports Mode")
+        # os.system("cls")
+        # print("Sports Mode")
         current_drive_mode = "S"
         gas_thresholds = MODES["Sports"]
     elif keyboard.is_pressed("9"):
-        os.system("cls")
-        print("Eco Mode")
+        # os.system("cls")
+        # print("Eco Mode")
         current_drive_mode = "E"
         gas_thresholds = MODES["Eco"]
     elif keyboard.is_pressed("0"):
-        os.system("cls")
-        print("Manual Mode")
+        # os.system("cls")
+        # print("Manual Mode")
         current_drive_mode = "M"
         gas_thresholds = MODES["Manual"]
 
-# select model in the beginning of the program
-def mode_selector():
-    global current_drive_mode, gas_thresholds
-    try:
-        answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
-        os.system("cls")
-        if answer == "":
-            gas_thresholds = MODES["Normal"]  # Normal Mode
-            print("Normal Mode")
-            current_drive_mode = "D"
-        elif answer == "s" or answer == "S":
-            gas_thresholds = MODES["Sports"]  # Sports Mode
-            print("Sports Mode")
-            current_drive_mode = "S"
-        elif answer == "e" or answer == "E":
-            gas_thresholds = MODES["Eco"]  # Eco Mode
-            print("Eco Mode")
-            current_drive_mode = "E"
-        elif answer == "m" or answer == "M":
-            gas_thresholds = MODES["Manual"]  # Eco Mode
-            print("Manual Mode")
-            current_drive_mode = "M"
-    except:
-        os.system("cls")
-        gas_thresholds = MODES["Normal"]  # Normal Mode
-        print("Normal Mode")
-        current_drive_mode = "D"
+# # select model in the beginning of the program
+# def mode_selector():
+#     global current_drive_mode, gas_thresholds
+#     try:
+#         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
+#         os.system("cls")
+#         if answer == "":
+#             gas_thresholds = MODES["Normal"]  # Normal Mode
+#             # print("Normal Mode")
+#             current_drive_mode = "D"
+#         elif answer == "s" or answer == "S":
+#             gas_thresholds = MODES["Sports"]  # Sports Mode
+#             # print("Sports Mode")
+#             current_drive_mode = "S"
+#         elif answer == "e" or answer == "E":
+#             gas_thresholds = MODES["Eco"]  # Eco Mode
+#             # print("Eco Mode")
+#             current_drive_mode = "E"
+#         elif answer == "m" or answer == "M":
+#             gas_thresholds = MODES["Manual"]  # Eco Mode
+#             # print("Manual Mode")
+#             current_drive_mode = "M"
+#     except:
+#         os.system("cls")
+#         gas_thresholds = MODES["Normal"]  # Normal Mode
+#         # print("Normal Mode")
+#         current_drive_mode = "D"
 
 
-def pause():
-    global stop
-    if keyboard.is_pressed("`"):
-        os.system("cls")
-        print("You stopped the program, press \\ again to resume.")
-        print("press ESC to quit the program")
-        while True:
-            if keyboard.is_pressed("\\"):
-                print("Resumed.")
-                break
-            elif keyboard.is_pressed("esc"):
-                print("Quitting...")
-                stop = True
+# def pause():
+#     global stop
+#     if keyboard.is_pressed("`"):
+#         os.system("cls")
+        # print("You stopped the program, press \\ again to resume.")
+        # print("press ESC to quit the program")
+#         while True:
+#             if keyboard.is_pressed("\\"):
+                # print("Resumed.")
+#                 break
+#             elif keyboard.is_pressed("esc"):
+                # print("Quitting...")
+#                 stop = True
 
-def statement():
-    print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
-    print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
-    print("press ` (under the esc) to stop the program")
-    print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
+# def statement():
+    # print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
+    # print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
+    # print("press ` (under the esc) to stop the program")
+    # print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
 
 def main():
     global rt, addr
 
+    # wait for udp server to be ready
+    while not UDPconnectable(UDP_IP, UDP_PORT):
+        if condition["stop"]:
+            sys.exit()
+        APP.update()
+        if UDPconnectable(UDP_IP, UDP_PORT):
+            break
     # setting up an udp server
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
-
-    print(f"PLEASE OPEN UP THE GAME FIRST")
-    print("AND MAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
-    print(f"PLEASE SET THE OUTPUT IP TO {UDP_IP}")
-    print(f"AND THE PORT TO {UDP_PORT}")
     sock.bind((UDP_IP, UDP_PORT))
     data, addr = sock.recvfrom(1500)
     rt = get_data(data)
     
-    os.system("cls")
-    print("WORKED\n\n")
+    condition["UDP_started"] = True
+    condition["gas"] = rt["Accel"] / 255
+    condition["brake"] = rt["Brake"] / 255
+    condition["gear"] = rt["Gear"]
+    condition["drive_mode"] = current_drive_mode
+    APP.UDP_started(condition)
 
-    statement()
+    APP.update_idletasks()
+    APP.update()
 
-    # tkPack()
-
-    while stop == False:
-        pause()
+    while True:
+        # pause()
         # choosing modes by hitting 7, 8, 9, 0
         mode_changer()
-
+        ready = select.select([sock], [], [], 3)  # Check if data is available (timeout is 0.1 seconds)
+        if ready[0]:  # If data is available
+            pass
+        else:
+            APP.quit()
+            APP.destroy()
+            sys.exit()
         data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
         # received data is now in the returned_data dict
         rt = get_data(data)
+        condition["gas"] = rt["Accel"] / 255
+        condition["brake"] = rt["Brake"] / 255
+        condition["gear"] = rt["Gear"]
+        condition["drive_mode"] = current_drive_mode
+        APP.update_home(condition)
 
-        # root.update_idletasks()
-        # root.update()
+        if condition["stop"]:
+            sys.exit()
+
+        APP.update()
+        APP.update_idletasks()
 
         # stop calculation if the mode is in manual
         if current_drive_mode == "M":
@@ -588,10 +401,12 @@ def main():
         if rt["IsRaceOn"] == 0:
             continue
         
-        
         # actually compute and make decision
         analyzeInput()
         makeDecision()
         
 if __name__ == "__main__":
+    APP = GUI.FHRG_GUI(condition=condition, VERSION=VERSION)
+    APP.check_update()
     main()
+    sys.exit()
