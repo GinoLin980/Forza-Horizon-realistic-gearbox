@@ -1,18 +1,19 @@
 # 2024/5/9 v2.3 updated with custom tkinter
 # By GinoLin980
-import sys; sys.dont_write_bytecode = True
-import socket, os
+import sys; sys.dont_write_bytecode = True # prevent the generation of .pyc files
+import socket
 import keyboard, time
-from inputimeout import inputimeout
 from DATAOUT import *
 import GUI
 
+# the splash photo when startup
 try:
     import pyi_splash
     pyi_splash.close()
 except ImportError:
     pass
 
+# the version of the program
 VERSION = "v2.3"
 
 # initializing all the variables
@@ -56,13 +57,12 @@ current_drive_mode = "D"
 # A dictionary for that stores settings across the python files
 condition = {"stop": False, "UDP_started": False, "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0}
 
-
 ### Horizon section
 ## analyze and decision section
 def analyzeInput():
     # if you need other types of data, they can be found at the dict data_types
-    global gas, brake, gear, slip, idleRPM, kickdown, max_shift_rpm, shift_status, rpm_range_size, rpm_range_top, rpm_range_bottom,  aggressiveness, last_inc_aggr_time, sports_high_rpm, sports_high_rpm_time
-    shift_status = 0
+    global gas, brake, gear, slip, idleRPM, kickdown, max_shift_rpm, rpm_range_size, rpm_range_top, rpm_range_bottom,  aggressiveness, last_inc_aggr_time, sports_high_rpm, sports_high_rpm_time
+
     # transform gas and value into 0 to 1
     gas = rt["Accel"] / 255
     brake = rt["Brake"] / 255
@@ -113,6 +113,7 @@ def analyzeInput():
     # depending on the aggressiveness
     rpm_range_bottom = max(idleRPM + (min(gear, 6) * 70), rpm_range_top - rpm_range_size)
 
+    # (slip condition)
     if (
            rt["TireSlipRatioFrontLeft"] > 1
         or rt["TireSlipRatioFrontRight"] > 1
@@ -153,8 +154,8 @@ def makeDecision():
     ## gear changing section
     # not changing gear
     if (
-        # we have already shifted in the last 0.1s
-        time.time() < last_shift_time + 0.1
+        # we have already shifted in the last 0.2s
+        time.time() < last_shift_time + 0.2
         or
         # or we are in neutral or reverse
         gear < 1
@@ -192,11 +193,11 @@ def makeDecision():
         # if we are in high rpm(normally 5X00 rpm) and lower than the maximum rpm, have been intensively driving and in sports mode.
         if rpm > rpm_range_size * 2 and rpm < max_shift_rpm - 500 and sports_high_rpm:
             if current_drive_mode == "S":
-                return
+                return  # do not upshift in this situation
         
         # actually UPSHIFT
         shiftUp()
-        # reset the shift prevention time back to 1.2
+        # reset the shift prevention time back to 1.2 (this is for continuous downshift)
         PREVENT = last_downshift_time + 1.2
 
     # downshift logic
@@ -230,27 +231,26 @@ def makeDecision():
         )
     ):
         # allow several times of downshift in a row if we are giving heavy gas at low rpm
-        if kickdown == False and gas > 0.65 and rpm < rpm_range_size * 2 and gear >  4:
+        if kickdown == False and gas > 0.7 and rpm < rpm_range_size * 2 and gear >  4:
             kickdown = True
-            PREVENT = 0
-            jump_gears = int((rpm_range_size * 3.8) // rpm)
-            for i in range(jump_gears):
+            PREVENT = 0 # allow instant upshift if the rpm reached
+            jump_gears = int((rpm_range_size * 3.8) // rpm) # how many times we will jump down
+            for _ in range(jump_gears):
                 #prevent from jumping too many gears
                 if gear > 2:
                     shiftDown()
                     time.sleep(0.03)
-                    gear -= 1
+                    gear -= 1 # keep track of the gear in the loop
                 else:
-                    return
+                    break
         # ignore if we are kicking down, we put it here but not in not changing gears for allowing upshift and ignore the downshift below
-        if kickdown is True:
+        if kickdown:
             return
-        else:
-            shiftDown()
+        shiftDown()
 
 
 def shiftUp():
-    global last_shift_time, last_upshift_time, shift_status
+    global last_shift_time, last_upshift_time
 
     # shift up by press e
     keyboard.press_and_release("e")
@@ -260,7 +260,7 @@ def shiftUp():
 
 
 def shiftDown():
-    global last_shift_time, last_downshift_time, shift_status
+    global last_shift_time, last_downshift_time
 
     # shift down by press q
     keyboard.press_and_release("q")
@@ -293,60 +293,11 @@ def mode_changer():
         current_drive_mode = "M"
         gas_thresholds = MODES["Manual"]
 
-# # select model in the beginning of the program
-# def mode_selector():
-#     global current_drive_mode, gas_thresholds
-#     try:
-#         answer = inputimeout(prompt="Mode: ", timeout=10)  # to wait user input
-#         os.system("cls")
-#         if answer == "":
-#             gas_thresholds = MODES["Normal"]  # Normal Mode
-#             # print("Normal Mode")
-#             current_drive_mode = "D"
-#         elif answer == "s" or answer == "S":
-#             gas_thresholds = MODES["Sports"]  # Sports Mode
-#             # print("Sports Mode")
-#             current_drive_mode = "S"
-#         elif answer == "e" or answer == "E":
-#             gas_thresholds = MODES["Eco"]  # Eco Mode
-#             # print("Eco Mode")
-#             current_drive_mode = "E"
-#         elif answer == "m" or answer == "M":
-#             gas_thresholds = MODES["Manual"]  # Eco Mode
-#             # print("Manual Mode")
-#             current_drive_mode = "M"
-#     except:
-#         os.system("cls")
-#         gas_thresholds = MODES["Normal"]  # Normal Mode
-#         # print("Normal Mode")
-#         current_drive_mode = "D"
-
-
-# def pause():
-#     global stop
-#     if keyboard.is_pressed("`"):
-#         os.system("cls")
-        # print("You stopped the program, press \\ again to resume.")
-        # print("press ESC to quit the program")
-#         while True:
-#             if keyboard.is_pressed("\\"):
-                # print("Resumed.")
-#                 break
-#             elif keyboard.is_pressed("esc"):
-                # print("Quitting...")
-#                 stop = True
-
-# def statement():
-    # print("OTHER LETTERS OR TIMEOUT WILL HAVE NORMAL MODE")
-    # print("\nMAKE SURE THAT THE SHIFTING IS BOUND TO 'Q' AND 'E'")
-    # print("press ` (under the esc) to stop the program")
-    # print("you can change the mode between Normal, Sports, Eco and Manual by hitting 7, 8, 9 ,0 ")
-
 def main():
     global rt, addr
 
     # wait for udp server to be ready
-    while not UDPconnectable(UDP_IP, UDP_PORT):
+    while True:
         if condition["stop"]:
             sys.exit()
         APP.update()
@@ -410,3 +361,4 @@ if __name__ == "__main__":
     APP.check_update()
     main()
     sys.exit()
+    
