@@ -2,7 +2,7 @@
 -- If a copy of the bCDDL was not distributed with this
 -- file, You can obtain one at http://beamng.com/bCDDL-1.1.txt
 
-local M = {}
+local M = {} -- containing all the params
 --Mandatory controller parameters
 M.type = "main"
 M.defaultOrder = 500
@@ -189,7 +189,7 @@ local sharedFunctions = {}
 sharedFunctions.selectShiftPoints = function(gearIndex)
   --interpolate based on aggression between high/low ranges
   local aggression = min(max((smoothedValues.drivingAggression - 0.2) / 0.8, 0), 1)
-  local aggressionCoef = min(max(aggression * aggression, 0), 1)
+  local aggressionCoef = min(max(aggression * aggression, 0), 1) -- the aggressiveness become a bia to shift AV
   local shiftPoint = shiftPoints[gearIndex]
   shiftBehavior.shiftDownAV = shiftPoint.lowShiftDownAV + (shiftPoint.highShiftDownAV - shiftPoint.lowShiftDownAV) * aggressionCoef
   shiftBehavior.shiftUpAV = shiftPoint.lowShiftUpAV + (shiftPoint.highShiftUpAV - shiftPoint.lowShiftUpAV) * aggressionCoef
