@@ -34,13 +34,13 @@ class Gearbox():
         self.kickdown: bool
         self.jump_gears: float
         self.sports_high_rpm: bool
-        self.sports_high_rpm_time: float
-        self.last_shift_time: float
-        self.last_upshift_time: float
+        self.sports_high_rpm_time: float = time.time()
+        self.last_shift_time: float = 0
+        self.last_upshift_time: float = 0
         self.last_downshift_time: float = 0
 
-        self.aggressiveness: float
-        self.last_inc_aggr_time: float
+        self.aggressiveness: float = 0
+        self.last_inc_aggr_time: float = 0
 
         self.PREVENT: float = self.last_downshift_time + 1.2
         self.WAIT_TIME_BETWEEN_DOWNSHIFTS: float
@@ -62,7 +62,7 @@ class Gearbox():
         # GUI information
         # A dictionary for that stores settings across the python files
         self.condition: dict[str, bool|float|str|int] = {"stop": False, "UDP_started": False, "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0}
-        self.APP = GUI.FHRG_GUI(self.condition, self.VERSION)
+        self.APP = GUI.FHRG_GUI(condition=self.condition, VERSION=self.VERSION)
 
     def analyzeInput(self) -> None:
         # if you need other types of data, they can be found at the dict data_types
@@ -74,9 +74,9 @@ class Gearbox():
         self.gear = self.RETURNED_DATA["Gear"]
 
         idleRPM: float = self.RETURNED_DATA["EngineIdleRpm"]
-        self.rpm_range_size: float = (self.RETURNED_DATA["EngineMaxRpm"] - idleRPM) / 3 # devide into 3 parts for calculation
-        self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86 if self.RETURNED_DATA["EngineMaxRpm"] < 4000 else self.RETURNED_DATA["EngineMaxRpm"] * 0.7 # change this value if it is not capable to upshift on your car, especially for some trucks.
-
+        self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86 if self.RETURNED_DATA["EngineMaxRpm"] > 4000 else (self.RETURNED_DATA["EngineMaxRpm"] * 0.7 if self.current_drive_mode != "S" else self.RETURNED_DATA["EngineMaxRpm"] * 0.75) # change this value if it is not capable to upshift on your car, especially for some trucks.
+        self.rpm_range_size: float = (self.RETURNED_DATA["EngineMaxRpm"] - idleRPM) / (3 if self.max_shift_rpm > 4000 and self.max_shift_rpm < 8000 else 5)
+        
         # compute a new aggressiveness level depending on the gas and brake pedal pressure
         # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]
         new_aggr = min(
@@ -96,10 +96,10 @@ class Gearbox():
             # we update it with the new one
             self.aggressiveness = new_aggr
             # and save the time at which we updated it
-            last_inc_aggr_time = time.time()
+            self.last_inc_aggr_time = time.time()
 
         # if we have not increased the aggressiveness for at least 4 seconds
-        if time.time() > last_inc_aggr_time + 4:
+        if time.time() > self.last_inc_aggr_time + 4:
             # we lower the aggressiveness by a factor given by the current driving move
             self.aggressiveness -= 1 / self.gas_thresholds[2]
 
@@ -141,11 +141,11 @@ class Gearbox():
         if time.time() > self.last_downshift_time + 2:
             self.kickdown = False
 
-    def makeDecision(self):
+    def makeDecision(self) -> None:
         speed: float = self.RETURNED_DATA["Speed"]
         rpm: float = self.RETURNED_DATA["CurrentEngineRpm"]
 
-        if kickdown == False:
+        if self.kickdown == False:
             # when braking we allow quick followup of downshift, but not when accelerating
             if self.brake > 0:
                 self.WAIT_TIME_BETWEEN_DOWNSHIFTS = 0.2
@@ -249,7 +249,7 @@ class Gearbox():
                 return
             self.shiftDown()
 
-    def main(self):
+    def main(self) -> None:
         # wait for udp server to be ready
         while True:
             if self.condition["stop"]:
@@ -264,10 +264,10 @@ class Gearbox():
         self.RETURNED_DATA = get_data(data)
         
         self.condition["UDP_started"] = True
-        self.condition["gas"] = self.gas
-        self.condition["brake"] = self.brake
-        self.condition["gear"] = self.gear
-        self.condition["drive_mode"] = self.current_drive_mode
+        self.condition["gas"] = 0
+        self.condition["brake"] = 0
+        self.condition["gear"] = 0
+        self.condition["drive_mode"] = "D"
         self.APP.UDP_started(self.condition)
 
         self.APP.update_idletasks()
@@ -286,10 +286,10 @@ class Gearbox():
                 sys.exit()
             data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
             # received data is now in the returned_data dict
-            rt = get_data(data)
-            self.condition["gas"] = self.gas
-            self.condition["brake"] = self.brake
-            self.condition["gear"] = self.gear
+            self.RETURNED_DATA = get_data(data)
+            self.condition["gas"] = self.RETURNED_DATA["Accel"] / 255
+            self.condition["brake"] = self.RETURNED_DATA["Brake"] / 255
+            self.condition["gear"] = self.RETURNED_DATA["Gear"]
             self.condition["drive_mode"] = self.current_drive_mode
             self.APP.update_home(self.condition)
 
@@ -311,7 +311,7 @@ class Gearbox():
             self.makeDecision()
 
 
-    def shiftUp(self):
+    def shiftUp(self) -> None:
         # shift up by press e
         keyboard.press_and_release("e")
         # update the last shifting times
@@ -319,7 +319,7 @@ class Gearbox():
         self.last_upshift_time = time.time()
 
 
-    def shiftDown(self):
+    def shiftDown(self) -> None:
         # shift down by press q
         keyboard.press_and_release("q")
         # update the last shifting times
@@ -328,7 +328,7 @@ class Gearbox():
 
 
     # to change the drive mode during drive
-    def mode_changer(self):
+    def mode_changer(self) -> None:
         if keyboard.is_pressed("7"):
             # os.system("cls")
             # print("Normal Mode")
