@@ -71,7 +71,7 @@ def analyzeInput():
     idleRPM = rt["EngineIdleRpm"]
     rpm_range_size = (rt["EngineMaxRpm"] - rt["EngineIdleRpm"]) / 3
     rpm_range_top = rt["EngineMaxRpm"]
-    max_shift_rpm = rt["EngineMaxRpm"] * 0.86  # change this value if it is not capable to upshift on your car, especially for some trucks.
+    max_shift_rpm = rt["EngineMaxRpm"] * 0.86 if rt["EngineMaxRpm"] < 4000 else rt["EngineMaxRpm"] * 0.7 # change this value if it is not capable to upshift on your car, especially for some trucks.
 
     # compute a new aggressiveness level depending on the gas and brake pedal pressure
     # and apply a factor from the current driving mode gas_thresholds = [0.95, 0.4, 12, 0.15]

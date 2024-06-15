@@ -3,15 +3,15 @@ import customtkinter as ctk
 from PIL import Image
 import sys
 
-API_URL = "https://api.github.com/repos/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
-REPO_URL = "https://www.github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
+API_URL: str = "https://api.github.com/repos/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
+REPO_URL: str = "https://www.github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
 
 point = "\u2022"  # bullet point
 
-def image_path(relative_path):
+def image_path(relative_path) -> str:
     try:
         base_path = sys._MEIPASS
     except AttributeError:
@@ -22,20 +22,20 @@ Github_logo = ctk.CTkImage(Image.open(image_path("utils/github.png")))
 YouTube_logo = ctk.CTkImage(Image.open(image_path("utils/youtube.png")))
 Nexus_logo = ctk.CTkImage(Image.open(image_path("utils/nexus.png")))
 
-def do_nothing():
+def do_nothing() -> None:
     pass
 
 # a class for changing pages
 class PageChange(ctk.CTkFrame):
-    def __init__(self, master=None):
+    def __init__(self, master=None) -> None:
         super().__init__(master)
 
-    def show(self):
+    def show(self) -> None:
         self.lift()
 
 # class for pages
 class Pages(PageChange):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.page = PageChange()
 
@@ -178,7 +178,7 @@ class FHRG_GUI(ctk.CTk):
         condition,
         fg_color: str | tuple[str, str] | None = None,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(fg_color, **kwargs)
 
         self.VERSION = VERSION
