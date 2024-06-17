@@ -305,12 +305,19 @@ class FHRG_GUI(ctk.CTk):
             response = requests.get(API_URL)
             response.raise_for_status()
             latest_release = response.json()[0]["tag_name"]
+            release_note = response.json()[0]["body"]
+            try:
+                release_note = release_note.split("Release Note:")[1]
+            except:
+                release_note = "No release note provided"
             need_updated = latest_release != self.VERSION
             if need_updated:
                 update_window = ctk.CTk()  # Create a new window
                 update_window.title("NEW VERSION RELEASED!!")
                 label = ctk.CTkLabel(update_window, text=f"A new release is available. Go update!\nCurrent Version: {self.VERSION}\nLatest Version: {latest_release}")
                 label.pack(padx=10, pady=10)
+                log = ctk.CTkLabel(update_window, text="Changelog:\n" + release_note, justify="left")
+                log.pack(padx=10, pady=10)
                 yes_button = ctk.CTkButton(
                     update_window,
                     text="Yes",
