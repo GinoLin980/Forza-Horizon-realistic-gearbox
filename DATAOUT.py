@@ -1,7 +1,9 @@
+import sys; sys.dont_write_bytecode = True
 import socket, struct, select
+from typing import Dict, Union
 
 # to check the UDP server is outputing the data or not
-def UDPconnectable(ip, port):
+def UDPconnectable(ip: str, port: int):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         sock.bind((ip, port))  # Try to bind to the IP and port
@@ -118,7 +120,7 @@ jumps = {
     "hzn": 12,  # Unknown, 12 bytes of.. something
 }
 
-def get_data(data):
+def get_data(data: bytes) -> Dict[str, Union[int, float]]:
     return_dict = {}
 
     # additional var
