@@ -1,7 +1,9 @@
+import sys; sys.dont_write_bytecode = True
 import os, json, webbrowser, requests
 import customtkinter as ctk
 from PIL import Image
 import sys
+from typing import Dict, Optional, Union
 
 API_URL: str = "https://api.github.com/repos/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
 REPO_URL: str = "https://www.github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases"
@@ -11,7 +13,7 @@ ctk.set_default_color_theme("dark-blue")
 
 point = "\u2022"  # bullet point
 
-def image_path(relative_path) -> str:
+def image_path(relative_path: str) -> str:
     try:
         base_path = sys._MEIPASS
     except AttributeError:
@@ -27,7 +29,7 @@ def do_nothing() -> None:
 
 # a class for changing pages
 class PageChange(ctk.CTkFrame):
-    def __init__(self, master=None) -> None:
+    def __init__(self, master: None=None) -> None:
         super().__init__(master)
 
     def show(self) -> None:
@@ -39,7 +41,7 @@ class Pages(PageChange):
         super().__init__()
         self.page = PageChange()
 
-    def Introduction(self):
+    def Introduction(self) -> PageChange:
         page = PageChange()
         page.grid_rowconfigure(0, weight=0)
         page.grid_columnconfigure(0, weight=1)
@@ -78,7 +80,7 @@ class Pages(PageChange):
 
         return page
 
-    def HomePage(self, started):
+    def HomePage(self, started: bool) -> PageChange:
         # Clear the page 
         self.page = PageChange()
         for widget in self.page.winfo_children():
@@ -121,14 +123,14 @@ class Pages(PageChange):
         return self.page
 
     # update the data in HomePage
-    def update_data(self, gas, brake, gear, drive_mode):
+    def update_data(self, gas: float, brake: float, gear: int, drive_mode: str):
         self.gas_label.configure(text=f"Gas: {int(gas * 100)}%")
         self.gas_progress.set(gas)
         self.brake_label.configure(text=f"Gas: {int(brake * 100)}%")
         self.brake_progress.set(brake)
         self.gear_label.configure(text=f"{drive_mode}{gear}" if gear != 0 else "R", text_color=('red' if drive_mode == 'S' else ('blue' if drive_mode == 'D' else ('green' if drive_mode == 'E' else 'white'))))
 
-    def AboutMe(self):
+    def AboutMe(self) -> PageChange:
         page = PageChange()
         page.grid_rowconfigure(0, weight=0)
         page.grid_columnconfigure(0, weight=1)
@@ -174,8 +176,8 @@ class Pages(PageChange):
 class FHRG_GUI(ctk.CTk):
     def __init__(
         self,
-        VERSION,
-        condition,
+        VERSION: str,
+        condition: Dict[str, Union[bool, int, str]],
         fg_color: str | tuple[str, str] | None = None,
         **kwargs,
     ) -> None:
@@ -285,7 +287,7 @@ class FHRG_GUI(ctk.CTk):
         self.update_home = update_home
         self.protocol("WM_DELETE_WINDOW", do_nothing)
 
-    def UDP_started(self, condition):
+    def UDP_started(self, condition: Dict[str, Union[bool, int, str]]):
         if condition["UDP_started"]:
             self.home = Pages.HomePage(self, started=condition["UDP_started"])
             self.home.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
