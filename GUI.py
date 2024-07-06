@@ -350,7 +350,8 @@ class FHRG_GUI(ctk.CTk):
         self.protocol("WM_DELETE_WINDOW", do_nothing)
 
     def update_home_function(self, condition):
-        Pages().update_data(
+        Pages.update_data(
+            self,
             gas=condition["gas"], 
             brake=condition["brake"], 
             drive_mode=condition["drive_mode"], 
@@ -359,10 +360,10 @@ class FHRG_GUI(ctk.CTk):
 
     def UDP_started(self, condition: Dict[str, Union[bool, int, str]]):
         if condition["UDP_started"]:
-            self.home = Pages().HomePage(self, started=condition["UDP_started"])
+            self.home = Pages.HomePage(self, started=True)
             self.home.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
             if not self.settings["dont_show_intro"]:
-                self.intro.show()
+                self.intro.show
             self.home_button = ctk.CTkButton(
                 self.button_frame, 
                 text="Home", 

@@ -1,1 +1,1 @@
-pyinstaller --onefile --icon="utils/car.ico" -w --add-data utils;utils --splash "utils/splash.png" --name="FHGearbox" FH_auto.py
+pyinstaller --onefile --icon="utils/car.ico" -w --add-data utils;utils --splash "utils/splash.png" --name="FHGearbox" FH_auto_classes.py
