@@ -1,4 +1,4 @@
-# 2024/5/9 v2.3 updated with custom tkinter
+# 2024/7/6 v2.3.1 added release note and more compatible with trucks(low rpm cars)
 # By GinoLin980
 import sys; sys.dont_write_bytecode = True # prevent the generation of .pyc files
 import socket
@@ -15,19 +15,19 @@ except ImportError:
 
 class Gearbox():
     def __init__(self) -> None:
-        self.VERSION: str = "v2.3"
+        self.VERSION: str = "v2.3.1"
         
         # Network
         self.UDP_IP: str = "127.0.0.1"  # This sets server ip to localhost
         self.UDP_PORT: int = 8000  # You can freely edit this
         
-        # Store data
+        # Store data for cross file data
         self.RETURNED_DATA: dict
 
         # Car information
         self.gas: float # originally 0~255, transformed into 0~1
         self.brake: float # originally 0~255, transformed into 0~1
-        self.gear: float # 0(reverse)~n gear
+        self.gear: int # 0(reverse)~n gear
         self.slip: bool
 
         # Decision information
@@ -38,6 +38,8 @@ class Gearbox():
         self.last_shift_time: float = 0
         self.last_upshift_time: float = 0
         self.last_downshift_time: float = 0
+        # self.toggle_cruise_control: bool = False
+        # self.cruise_control_target: int = -1
 
         self.aggressiveness: float = 0
         self.last_inc_aggr_time: float = 0
@@ -57,7 +59,7 @@ class Gearbox():
             "Manual": [0, 0, 0, 0]
         }
         self.gas_thresholds: list[float] = self.MODES["Normal"]  # Normal drive mode
-        self.current_drive_mode: str = "D"
+        self.current_drive_mode: str = "D" # ["D",  "S", "E", "M"]
         
         # GUI information
         # A dictionary for that stores settings across the python files
@@ -65,16 +67,23 @@ class Gearbox():
         self.APP = GUI.FHRG_GUI(condition=self.condition, VERSION=self.VERSION)
 
     def analyzeInput(self) -> None:
+        """This is the function analyze and assign all variable needed in decision making"""
         # if you need other types of data, they can be found at the dict data_types
 
         # transform gas and value into 0 to 1
         self.gas = self.RETURNED_DATA["Accel"] / 255
         self.brake = self.RETURNED_DATA["Brake"] / 255
-
         self.gear = self.RETURNED_DATA["Gear"]
 
         idleRPM: float = self.RETURNED_DATA["EngineIdleRpm"]
-        self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86 if self.RETURNED_DATA["EngineMaxRpm"] > 4000 else (self.RETURNED_DATA["EngineMaxRpm"] * 0.7 if self.current_drive_mode != "S" else self.RETURNED_DATA["EngineMaxRpm"] * 0.75) # change this value if it is not capable to upshift on your car, especially for some trucks.
+        # max rpm
+        if self.RETURNED_DATA <= 4000: # define a new max rpm for low rpm cars
+            if self.current_drive_mode == "S":
+                self.RETURNED_DATA["EngineMaxRpm"] * 0.75
+            else:
+                self.RETURNED_DATA["EngineMaxRpm"] * 0.7
+        else:
+            self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86
         self.rpm_range_size: float = (self.RETURNED_DATA["EngineMaxRpm"] - idleRPM) / (3 if self.max_shift_rpm > 4000 and self.max_shift_rpm < 8000 else 5)
         
         # compute a new aggressiveness level depending on the gas and brake pedal pressure
@@ -142,6 +151,7 @@ class Gearbox():
             self.kickdown = False
 
     def makeDecision(self) -> None:
+        """Main logic of the whole program"""
         speed: float = self.RETURNED_DATA["Speed"]
         rpm: float = self.RETURNED_DATA["CurrentEngineRpm"]
 
@@ -249,6 +259,46 @@ class Gearbox():
                 return
             self.shiftDown()
 
+    def shiftUp(self) -> None:
+        # shift up by press e
+        keyboard.press_and_release("e")
+        # update the last shifting times
+        self.last_shift_time = time.time()
+        self.last_upshift_time = time.time()
+
+
+    def shiftDown(self) -> None:
+        # shift down by press q
+        keyboard.press_and_release("q")
+        # update the last shifting times
+        self.last_shift_time = time.time()
+        self.last_downshift_time = time.time()
+
+
+    # to change the drive mode during drive
+    def mode_changer(self) -> None:
+        """Detect keyboard press to change driving mode"""
+        if keyboard.is_pressed("7"):
+            # os.system("cls")
+            # print("Normal Mode")
+            self.current_drive_mode = "D"
+            self.gas_thresholds = self.MODES["Normal"]
+        elif keyboard.is_pressed("8"):
+            # os.system("cls")
+            # print("Sports Mode")
+            self.current_drive_mode = "S"
+            self.gas_thresholds = self.MODES["Sports"]
+        elif keyboard.is_pressed("9"):
+            # os.system("cls")
+            # print("Eco Mode")
+            self.current_drive_mode = "E"
+            self.gas_thresholds = self.MODES["Eco"]
+        elif keyboard.is_pressed("0"):
+            # os.system("cls")
+            # print("Manual Mode")
+            self.current_drive_mode = "M"
+            self.gas_thresholds = self.MODES["Manual"]
+
     def main(self) -> None:
         # wait for udp server to be ready
         while True:
@@ -257,10 +307,11 @@ class Gearbox():
             self.APP.update()
             if UDPconnectable(self.UDP_IP, self.UDP_PORT):
                 break
+
         # setting up an udp server
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Internet  # UDP
         sock.bind((self.UDP_IP, self.UDP_PORT))
-        data, addr = sock.recvfrom(1500)
+        data, _addr = sock.recvfrom(1500)
         self.RETURNED_DATA = get_data(data)
         
         self.condition["UDP_started"] = True
@@ -273,18 +324,19 @@ class Gearbox():
         self.APP.update_idletasks()
         self.APP.update()
 
+        # main loop
         while True:
-            # pause()
             # choosing modes by hitting 7, 8, 9, 0
             self.mode_changer()
-            ready = select.select([sock], [], [], 3)  # Check if data is available (timeout is 0.1 seconds)
+            ready = select.select([sock], [], [], 3)  # Check if data is available (timeout is 3 seconds)
             if ready[0]:  # If data is available
                 pass
             else:
                 self.APP.quit()
                 self.APP.destroy()
                 sys.exit()
-            data, addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
+
+            data, _addr = sock.recvfrom(1500)  # buffer size is 1500 bytes, this line reads data from the socket
             # received data is now in the returned_data dict
             self.RETURNED_DATA = get_data(data)
             self.condition["gas"] = self.RETURNED_DATA["Accel"] / 255
@@ -309,48 +361,16 @@ class Gearbox():
             # actually compute and make decision
             self.analyzeInput()
             self.makeDecision()
-
-
-    def shiftUp(self) -> None:
-        # shift up by press e
-        keyboard.press_and_release("e")
-        # update the last shifting times
-        self.last_shift_time = time.time()
-        self.last_upshift_time = time.time()
-
-
-    def shiftDown(self) -> None:
-        # shift down by press q
-        keyboard.press_and_release("q")
-        # update the last shifting times
-        self.last_shift_time = time.time()
-        self.last_downshift_time = time.time()
-
-
-    # to change the drive mode during drive
-    def mode_changer(self) -> None:
-        if keyboard.is_pressed("7"):
-            # os.system("cls")
-            # print("Normal Mode")
-            self.current_drive_mode = "D"
-            self.gas_thresholds = self.MODES["Normal"]
-        elif keyboard.is_pressed("8"):
-            # os.system("cls")
-            # print("Sports Mode")
-            self.current_drive_mode = "S"
-            self.gas_thresholds = self.MODES["Sports"]
-        elif keyboard.is_pressed("9"):
-            # os.system("cls")
-            # print("Eco Mode")
-            self.current_drive_mode = "E"
-            self.gas_thresholds = self.MODES["Eco"]
-        elif keyboard.is_pressed("0"):
-            # os.system("cls")
-            # print("Manual Mode")
-            self.current_drive_mode = "M"
-            self.gas_thresholds = self.MODES["Manual"]
-
 if __name__ == "__main__":
     FH_gearbox = Gearbox() # create an instance of the class
     FH_gearbox.main()
     sys.exit()
+
+# these functions are for cruise control. but now it seems existing modules are using virtual gamepad, which brings negative expirience on real gamepad(interrupt with the signal)
+    # def toggle_CC(self):
+    #     if keyboard.is_pressed('c') and not self.toggle_cruise_control:
+    #         self.toggle_cruise_control = True
+    #         self.cruise_control_target = self.RETURNED_DATA['Speed']
+    #     if keyboard.is_pressed('ctrl+c') and self.toggle_cruise_control:
+    #         self.toggle_cruise_control = False
+    #         self.cruise_control_target = -1

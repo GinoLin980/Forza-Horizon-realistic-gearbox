@@ -3,7 +3,7 @@ import socket, struct, select
 from typing import Dict, Union
 
 # to check the UDP server is outputing the data or not
-def UDPconnectable(ip: str, port: int):
+def UDPconnectable(ip: str, port: int) -> bool:
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         sock.bind((ip, port))  # Try to bind to the IP and port
@@ -121,6 +121,7 @@ jumps = {
 }
 
 def get_data(data: bytes) -> Dict[str, Union[int, float]]:
+    """Receive data from socket and process depend on types"""
     return_dict = {}
 
     # additional var
