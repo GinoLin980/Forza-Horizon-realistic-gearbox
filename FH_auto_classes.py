@@ -77,11 +77,11 @@ class Gearbox():
 
         idleRPM: float = self.RETURNED_DATA["EngineIdleRpm"]
         # max rpm
-        if self.RETURNED_DATA["EngineMaxRpm"] <= 4000: # define a new max rpm for low rpm cars
+        if self.RETURNED_DATA["EngineMaxRpm"] <= 5000: # define a new max rpm for low rpm cars
             if self.current_drive_mode == "S":
-                self.RETURNED_DATA["EngineMaxRpm"] * 0.75
+                self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.65
             else:
-                self.RETURNED_DATA["EngineMaxRpm"] * 0.7
+                self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.6
         else:
             self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86
         self.rpm_range_size: float = (self.RETURNED_DATA["EngineMaxRpm"] - idleRPM) / (3 if self.max_shift_rpm > 4000 and self.max_shift_rpm < 8000 else 5)
