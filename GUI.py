@@ -4,7 +4,7 @@ import json
 import webbrowser
 import requests
 from typing import Dict, Union
-from PIL import Image
+from PIL import Image, ImageTk
 import customtkinter as ctk
 
 # Constants
@@ -110,7 +110,7 @@ class Pages(PageChange):
             text="My Github", 
             image=Github_logo, 
             command=lambda: webbrowser.open_new(
-                "https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox"
+                "https://github.com/GinoLin980"
             )
         )
         YouTubeButton = ctk.CTkButton(
@@ -138,7 +138,8 @@ class Pages(PageChange):
             page,
             text="Vote On Forza Community !!!",
             image=Forza_logo,
-            command= lambda: webbrowser.open("https://www.example.com"),
+            hover_color="hot pink",
+            command= lambda: webbrowser.open("https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463"),
             font=ctk.CTkFont(weight='bold'),
             fg_color='red'
         )
@@ -159,7 +160,9 @@ class Pages(PageChange):
         YouTubeButton.grid(padx=10, pady=5, row=4, sticky="nw")
         NexusButton.grid(padx=10, pady=5, row=5, sticky="nw")
         gmail.grid(padx=10, pady=5, row=6, sticky="nw")
-        VersionLabel.grid(pady=120, row=10, sticky="se")
+
+        page.grid_rowconfigure(7, weight=10)
+        VersionLabel.grid(padx=20, pady=20, row=7, sticky="se")
 
         return page
 
@@ -240,7 +243,8 @@ class Pages(PageChange):
             text_color=(
                 'red' if drive_mode == 'S' else 
                 ('blue' if drive_mode == 'D' else 
-                ('green' if drive_mode == 'E' else 'white'))
+                ('green' if drive_mode == 'E' else
+                  'white'))
             )
         )
 
@@ -320,7 +324,17 @@ class FHRG_GUI(ctk.CTk):
             text="Always on top", 
             command=lambda: self.attributes("-topmost", True if always_on_top.get() else False)
         )
-        always_on_top.grid(sticky="sew")
+        always_on_top.grid(padx=10, sticky="sew")
+
+        vote_here_button = ctk.CTkButton(
+            self.button_frame,
+            text="Vote Here",
+            text_color="black",
+            fg_color="PeachPuff2",
+            hover_color="PeachPuff3",
+            command=lambda: (webbrowser.open("https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463"))
+        )
+        vote_here_button.grid(padx=15, pady=10, sticky="sew")
 
         quit_button = ctk.CTkButton(
             self.button_frame, 
@@ -379,8 +393,10 @@ class FHRG_GUI(ctk.CTk):
             response.raise_for_status()
             latest_release = response.json()[0]["tag_name"]
             release_note = response.json()[0]["body"]
+
             try:
-                release_note = release_note.split("Release Note:")[1]
+                release_note = release_note.split("Release Note:\n")[1]
+                release_note = release_note.replace("* ", "")
             except:
                 release_note = "No release note provided"
             need_updated = latest_release != self.VERSION
@@ -396,6 +412,19 @@ class FHRG_GUI(ctk.CTk):
                     )
                 )
                 label.pack(padx=10, pady=10)
+
+                # Easter Egg
+                latest_release_comp = int(latest_release[1:].replace(".", ""))
+                current_version_comp = int(self.VERSION[1:].replace(".", ""))
+                if latest_release_comp < current_version_comp:
+                    Egg = ctk.CTkLabel(
+                        update_window,
+                        text="YOU SUS\nARE YOU A DEVELOPER?\nWHY NOT JOIN MY DEVELOPMENT :)",
+                        font=ctk.CTkFont(size=20, weight='bold'),
+                        text_color="light pink"
+                    )
+                    Egg.pack(padx=10, pady=20)
+
                 log = ctk.CTkLabel(
                     update_window, 
                     text="Changelog:\n" + release_note, 
