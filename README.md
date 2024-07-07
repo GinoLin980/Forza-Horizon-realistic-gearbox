@@ -46,4 +46,4 @@ Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/
 ## Future Goals
 - [x] When coasting in high rpm and then full accelerate, it will sometimes upshift first and then downshift(maybe because the code detects too quickly)
 - [x] Parameter fine tune(gas_threshold)
-- [ ] Add cruise control or pit limiter(I've tried and it's impossible to do without reaching the core of the game, GO VOTE TO LET THEM SEE!!!!!!!!!)
+- [ ] Add cruise control or pit limiter(I've tried and it's impossible to do without reaching the core of the game, GO [VOTE](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463) TO LET THEM SEE!!!!!!!!!)
