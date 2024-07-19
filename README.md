@@ -3,6 +3,10 @@
 ## Introduction
 This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox. It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
 
+## Support
+### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
+### **[Vote on Forza Forum to let us drive towards the horizon](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463)**
+
 ## Demonstration
 Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gearbox in action!
 
@@ -31,15 +35,15 @@ This project builds upon the work from:
 
 ### Big thanks to these bros, I can't make this without them. 🫶
 
+## ⚠️DISCLAIMER
+This mod might violate the [Forza Code of Conduct](https://support.forzamotorsport.net/hc/en-us/articles/360035563914-Forza-Code-of-Conduct), so take your own responsibility.
 
+**(they are bad at making the game better and they didn't reply my 3 emails and I'm not getting banned yet:) GO [VOTE](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463)**
 
 ## Nexus Mod
 Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/258/?tab=description)
 
-## Support
-### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
-### **[Vote on Forza Forum to let us drive towards the horizon](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463)**
-
 ## Future Goals
 - [x] When coasting in high rpm and then full accelerate, it will sometimes upshift first and then downshift(maybe because the code detects too quickly)
 - [x] Parameter fine tune(gas_threshold)
+- [ ] Add cruise control or pit limiter(I've tried and it's impossible to do without reaching the core of the game, GO [VOTE](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463) TO LET THEM SEE!!!!!!!!!)
