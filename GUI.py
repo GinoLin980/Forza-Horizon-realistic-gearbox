@@ -413,7 +413,7 @@ class FHRG_GUI(ctk.CTk):
                 )
                 label.pack(padx=10, pady=10)
 
-                # Easter Egg
+                ### Easter Egg
                 latest_release_comp = int(latest_release[1:].replace(".", ""))
                 current_version_comp = int(self.VERSION[1:].replace(".", ""))
                 if latest_release_comp < current_version_comp:
@@ -424,7 +424,8 @@ class FHRG_GUI(ctk.CTk):
                         text_color="light pink"
                     )
                     Egg.pack(padx=10, pady=20)
-
+                ###
+                
                 log = ctk.CTkLabel(
                     update_window, 
                     text="Changelog:\n" + release_note, 
@@ -458,3 +459,19 @@ class FHRG_GUI(ctk.CTk):
     # Function to stop the while loop
     def stopWhile(self):
         self.condition["stop"] = True
+
+
+# Run this file to directly check the functionality. (showcase mode)
+if __name__ == "__main__":
+    condition = {}
+    condition["UDP_started"] = True
+    condition["gas"] = 0
+    condition["brake"] = 0
+    condition["gear"] = 0
+    condition["drive_mode"] = "D"
+    condition["stop"] = False
+    APP = FHRG_GUI("v2.3.3", condition)
+    while True:
+        APP.update()
+        if condition["stop"]:
+                sys.exit()
