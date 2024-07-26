@@ -17,6 +17,24 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 - **Drive Mode Selection**: Choose between Normal, Sports, Eco, or Manual modes.
 - **Forza Truck Simulator?**: Trucks are included!
 
+## Project Structure
+```
+📦 
+├─ FHGearbox.exe
+├─ FHGearbox_MS_store.exe
+├─ Ping and Retroflect Utility.exe
+├─ README.md
+├─ reference_from_other_game
+└─ src
+   ├─ DATAOUT.py
+   ├─ FH_auto.py
+   ├─ FH_auto_classes.py #main file
+   ├─ GUI.py
+   ├─ buildEXE.bat
+   ├─ ping_tool.py
+   └─ utils
+```
+
 ## Installation     [![Github All Releases](https://img.shields.io/github/downloads/GinoLin980/Forza-Horizon-realistic-gearbox/total.svg)]()
 
 ### [Release Page](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/releases)
