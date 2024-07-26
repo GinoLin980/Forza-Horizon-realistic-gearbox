@@ -3,13 +3,14 @@
 ## Introduction
 
 This Python script enhances your driving experience in Forza Horizon 4/5 by simulating a realistic gearbox.
+
 It's perfect for those who enjoy casual driving in the city and occasional quick accelerations for overtaking. Inspired by [a YouTube video](https://www.youtube.com/watch?v=w_d0utwbM1M&ab_channel=TitouanDupuy) on a realistic gearbox, this project aims to bring that experience to everyone.
 
 ## Demonstration
 
 Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gearbox in action!
 
-## Features
+## 😎Features
 
 - **Shift like a REAL CAR**: Experience gear shifting just like you would in a real vehicle.
 - **Sports Mode**: Hold RPM when intensively driving.
@@ -23,7 +24,7 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 - **Standard Users**: Simply download the `.exe` file and run it.
 - **Advanced Users**: Download the `.py` file and feel free to tweak the values in your editor.
 
-### **If you installed Forza Horizon from Microsoft Store.**
+### ‼️**If you installed Forza Horizon from Microsoft Store.**‼️
 
 **Download `FHGearbox_MS_store.exe` and `Ping.and.Retroflect.Utility.exe`.**
 
@@ -44,7 +45,9 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 3. Open up game and set the UDP Data Out IP to `<WHAT YOU CHOSE TO RUN IN RETROFLECT>` and Data Out Port `8000`
 4. Open `FHGearbox_MS_store.exe` and have fun!
 
-## Forked From
+<img src="https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/blob/25d3143bfbc95b245c64a806873387541563770c/ping_tool_illustrated.png" width="450" />
+
+## Forked From🤞
 
 This project builds upon the work from:
 
@@ -71,7 +74,7 @@ This mod might violate the [Forza Code of Conduct](https://support.forzamotorspo
 
 Find this project on [Nexus Mods.](https://www.nexusmods.com/forzahorizon5/mods/258/?tab=description)
 
-## Support
+## 🤝Support
 
 ### Encounter any issues? Post an [Issue](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/issues) or join [my Discord server](https://discord.com/invite/Ch9vdu4mT4) to contribute to the development.
 
