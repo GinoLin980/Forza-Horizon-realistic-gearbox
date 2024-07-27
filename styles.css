@@ -40,7 +40,7 @@ canvas {
     align-items: center;
     text-align: center;
     background: linear-gradient(to bottom right, #7850ff, #a100e0, #ff31c1d0);
-    background-clip: text; /* Transparent background */
+    background-clip: text;
     -webkit-text-fill-color: rgba(239, 191, 230, 0.412);
     animation: fadeInAnimation ease 3s;
     animation-iteration-count: 1;
@@ -48,12 +48,8 @@ canvas {
 }
 
 @keyframes fadeInAnimation {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+    0% { opacity: 0; }
+    100% { opacity: 1; }
 }
 
 #main h1 {
@@ -64,7 +60,7 @@ canvas {
     background-clip: text;
     color: transparent;
     white-space: nowrap;
-    text-shadow: 
+    text-shadow:
         0 0 5px rgba(255, 255, 255, 0.5),
         0 0 10px rgba(255, 255, 255, 0.3),
         0 0 15px rgba(255, 255, 255, 0.2),
@@ -76,21 +72,31 @@ canvas {
     margin-bottom: 30px;
     white-space: nowrap;
     color: white;
-    text-shadow: 
+    text-shadow:
         0 0 5px rgba(255, 255, 255, 0.5),
         0 0 10px rgba(255, 255, 255, 0.3);
 }
 
-#features {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    animation: fadeInAnimation ease 5s;
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-    background: transparent;
+@media screen and (max-width: 768px) {
+    #main h1 {
+        font-size: 3em;
+        white-space: normal; /* Allow text to wrap */
+    }
+    #main p {
+        font-size: 1.8em;
+        white-space: normal; /* Allow text to wrap */
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #main h1 {
+        font-size: 2.5em;
+        white-space: normal; /* Allow text to wrap */
+    }
+    #main p {
+        font-size: 1.5em;
+        white-space: normal; /* Allow text to wrap */
+    }
 }
 
 section {
@@ -110,7 +116,7 @@ h2 {
     text-align: center;
     margin-top: 0;
     color: #aa8de1;
-    text-shadow: 
+    text-shadow:
         0 0 2px rgba(255, 255, 255, 0.5),
         0 0 5px rgba(255, 255, 255, 0.3);
 }
@@ -130,25 +136,24 @@ h4 {
     background-clip: text;
 }
 
-
 ul, ol {
-    font-size: 1.2;
+    font-size: 1.2em;
     padding-left: 20px;
 }
 
 li {
     margin-bottom: 10px;
     font-size: 1.4em;
-    text-shadow: 
+    text-shadow:
         0 0 2px rgba(255, 255, 255, 0.5),
         0 0 6px rgba(255, 255, 255, 0.3);
 }
 
-#support p{
+#support p {
     font-size: 1.8em;
 }
 
-#support a{
+#support a {
     color: rgb(20, 192, 192);
 }
 
@@ -160,21 +165,21 @@ li {
 }
 
 .button {
-    background-image: linear-gradient(to right, #6459f5 0%, #f576f9  51%, #ab30b4  100%);
+    background-image: linear-gradient(to right, #6459f5 0%, #f576f9 51%, #ab30b4 100%);
     margin: 10px;
     padding: 15px 45px;
     text-align: center;
     text-transform: uppercase;
     transition: 0.5s;
     background-size: 200% auto;
-    color: white;            
+    color: white;
     box-shadow: 0 0 20px #e763ee7c;
     border-radius: 10px;
     display: block;
-  }
+}
 
-  .button:hover {
-    background-position: right center; /* change the direction of the change here */
+.button:hover {
+    background-position: right center;
     color: #fff;
     text-decoration: none;
-  }
+}
