@@ -1,4 +1,5 @@
 body, html {
+    scroll-behavior: smooth;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -81,10 +82,10 @@ canvas {
 #main h1 {
     font-size: 4.5em;
     margin-bottom: 10px;
+    color: transparent;
     background: linear-gradient(to right, #4a90e2, #8a2be2, #ff69b4);
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
     white-space: normal;
     text-shadow: 
         0 0 5px rgba(255, 255, 255, 0.5),
@@ -104,7 +105,8 @@ canvas {
 }
 
 #features {
-    height: 100vh;
+    pointer-events: none;
+    height: 80vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -113,6 +115,28 @@ canvas {
     animation-iteration-count: 1;
     animation-fill-mode: forwards;
     background: transparent;
+}
+
+#features h2 {
+    font-size: 4em;
+    text-align: center;
+    margin-top: 0;
+    color: #aa8de1;
+    text-shadow: 
+        0 0 2px rgba(255, 255, 255, 0.5),
+        0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+#features h3{
+    font-size: 2.2em;
+    margin-top: 0;
+    color: violet;
+}
+
+#features p{
+    font-size: 1.8em;
+    text-shadow: 2px 2px 2px #111;
+    
 }
 
 section {
@@ -140,7 +164,8 @@ h2 {
 h3 {
     font-size: 2.2em;
     margin-top: 0;
-    color: #1f7fe6;
+    color: rgb(93, 137, 233);
+    text-shadow: 2px 2px 5px black;
 }
 
 h4 {
