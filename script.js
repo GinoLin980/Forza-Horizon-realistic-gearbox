@@ -10,11 +10,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Create a scene for the features section
     var featureScene = new ScrollMagic.Scene({
         triggerElement: "#features",
-        triggerHook: 0.1,
-        duration: deviceHeight, // Duration is twice the device height
-    })
-    .setPin("#features") // Pin the features section
-    .addTo(controller);
+        triggerHook: isMobile() ? 0.2 : 0,
+        duration: isMobile() ? '75%' : deviceHeight,
+        offset: isMobile() ? 10 : 0
+      })
+      .setPin("#features", {pushFollowers: isMobile() ? false : true})
+      .addTo(controller);
 
     // Recalculate on window resize
     window.addEventListener('resize', function() {
@@ -24,17 +25,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Animate feature items
     document.querySelectorAll('.feature-item').forEach((item, index) => {
-        var tween = gsap.fromTo(item, 
-            { scale: 3.5, opacity: 0 }, 
-            { scale: 1, opacity: 1, duration: 1, delay: index * 0.3 }
-        );
-
-        new ScrollMagic.Scene({
-            triggerElement: item,
-            triggerHook: 0.8
-        })
-        .setTween(tween)
-        .addTo(controller);
+      var tween = gsap.fromTo(item, 
+        { scale: isMobile() ? 2.5 : 3.5, opacity: 0 }, 
+        { scale: 1, opacity: 1, delay: index * 0.1 }
+      );
+  
+      new ScrollMagic.Scene({
+        triggerElement: item,
+        triggerHook: isMobile() ? 1.4 : 0.8,
+      })
+      .setTween(tween)
+      .addTo(controller);
     });
 
     // Canvas animation
