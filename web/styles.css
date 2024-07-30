@@ -1,10 +1,44 @@
+/* Base styles */
 body, html {
+    scroll-behavior: smooth;
     margin: 0;
     padding: 0;
     height: 100%;
     font-family: Arial, sans-serif;
     color: white;
     overflow-x: hidden;
+    font-size: 16px; /* Base font size */
+}
+
+/* Responsive font sizes */
+@media screen and (min-width: 2000px) { /* 2K screens */
+    html {
+        font-size: 20px; /* Larger base font size for 2K screens */
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    html {
+        font-size: 18px; /* Adjust font size for large desktops */
+    }
+}
+
+@media screen and (max-width: 992px) {
+    html {
+        font-size: 16px; /* Adjust font size for desktops and tablets */
+    }
+}
+
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 14px; /* Adjust font size for tablets */
+    }
+}
+
+@media screen and (max-width: 576px) {
+    html {
+        font-size: 12px; /* Adjust font size for smaller phones */
+    }
 }
 
 .background {
@@ -27,62 +61,59 @@ canvas {
 .content {
     position: relative;
     z-index: 2;
-    padding: 20px;
-    max-width: 1200px;
+    padding: 1.25rem; /* 20px */
+    max-width: 100rem; /* 1600px */
     margin: 0 auto;
 }
 
+#main, #features {
+    min-height: 100vh;
+    height: auto;
+    z-index: 3;
+    overflow: hidden;
+}
+
 #main {
-    height: 100vh;
+    height: 90vh;
+    background: transparent;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    text-align: center;
-    background: linear-gradient(to bottom right, #7850ff, #a100e0, #ff31c1d0);
-    background-clip: text; /* Transparent background */
-    -webkit-text-fill-color: rgba(239, 191, 230, 0.412);
-    animation: fadeInAnimation ease 3s;
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-}
-
-@keyframes fadeInAnimation {
-    0% {
-        opacity: 0;
-    }
-    100% {
-        opacity: 1;
-    }
+    white-space: normal;
+    overflow-x: hidden;
+    opacity: 0;
+    animation: fadeInAnimation ease 3s forwards;
 }
 
 #main h1 {
-    font-size: 4.5em;
-    margin-bottom: 10px;
-    background: linear-gradient(to right, #4a90e2, #8a2be2, #ff69b4);
+    font-size: 6rem; /* 96px */
+    margin-bottom: 1.25rem; /* 20px */
+    color: transparent;
+    background: linear-gradient(to right, #71a7e4, #9c32ff, #e15d9f);
     -webkit-background-clip: text;
     background-clip: text;
-    color: transparent;
-    white-space: nowrap;
-    text-shadow: 
-        0 0 5px rgba(255, 255, 255, 0.5),
-        0 0 10px rgba(255, 255, 255, 0.3),
-        0 0 15px rgba(255, 255, 255, 0.2),
-        0 0 20px rgba(255, 0, 222, 0.1);
+    white-space: normal;
+    text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.163), 0 0 10px rgba(255, 255, 255, 0.3), 0 0 15px rgba(255, 255, 255, 0.2), 0 0 45px rgba(255, 0, 221, 0.152);
+    text-align: center;
 }
 
 #main p {
-    font-size: 2.5em;
-    margin-bottom: 30px;
-    white-space: nowrap;
-    color: white;
-    text-shadow: 
-        0 0 5px rgba(255, 255, 255, 0.5),
-        0 0 10px rgba(255, 255, 255, 0.3);
+    font-size: 2.5rem; /* 40px */
+    margin-bottom: 1.875rem; /* 30px */
+    white-space: normal;
+    color: transparent;
+    background: linear-gradient(to right, #e15d9f, #71a7e4, #a162db);
+    -webkit-background-clip: text;
+    background-clip: text;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5), 0 0 10px rgba(255, 255, 255, 0.3);
+    text-align: center;
 }
 
 #features {
-    height: 100vh;
+    pointer-events: none;
+    height: 120vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -93,12 +124,38 @@ canvas {
     background: transparent;
 }
 
+#features h2 {
+    font-size: 3.6rem; /* 57.6px */
+    text-align: center;
+    margin-top: 0;
+    color: #aa8de1;
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.5), 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+#features h3 {
+    font-size: 2.3rem; /* 36.8px */
+    margin-top: 0;
+    color: violet;
+}
+
+#features p {
+    font-size: 1.6rem; /* 25.6px */
+    text-shadow: 2px 2px 2px #111;
+}
+
 section {
-    margin-bottom: 60px;
+    margin-bottom: 3.75rem; /* 60px */
     background-color: rgba(0, 0, 0, 0.6);
-    padding: 20px;
+    padding: 1.25rem; /* 20px */
     border-radius: 10px;
     transition: transform 0.3s ease-in-out;
+}
+
+#setup-instructions,
+#support,
+#links {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 section:hover {
@@ -106,23 +163,22 @@ section:hover {
 }
 
 h2 {
-    font-size: 3em;
+    font-size: 3rem; /* 48px */
     text-align: center;
     margin-top: 0;
     color: #aa8de1;
-    text-shadow: 
-        0 0 2px rgba(255, 255, 255, 0.5),
-        0 0 5px rgba(255, 255, 255, 0.3);
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.5), 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
 h3 {
-    font-size: 2.2em;
+    font-size: 2.4rem; /* 38.4px */
     margin-top: 0;
-    color: #1f7fe6;
+    color: rgb(93, 137, 233);
+    text-shadow: 2px 2px 5px black;
 }
 
 h4 {
-    font-size: 1.8em;
+    font-size: 2rem; /* 32px */
     margin-top: 0;
     color: transparent;
     background: linear-gradient(to right, #ce4ae2, #4676a9, #69d7ff);
@@ -130,51 +186,73 @@ h4 {
     background-clip: text;
 }
 
-
 ul, ol {
-    font-size: 1.2;
-    padding-left: 20px;
+    font-size: 1.2rem; /* 19.2px */
+    padding-left: 1.25rem; /* 20px */
 }
 
 li {
-    margin-bottom: 10px;
-    font-size: 1.4em;
-    text-shadow: 
-        0 0 2px rgba(255, 255, 255, 0.5),
-        0 0 6px rgba(255, 255, 255, 0.3);
+    margin-bottom: 0.9rem; /* 10px */
+    font-size: 1.2rem; /* 19.2px */
+    text-shadow: 0 0 2px rgba(255, 255, 255, 0.5), 0 0 6px rgba(255, 255, 255, 0.3);
 }
 
-#support p{
-    font-size: 1.8em;
-}
-
-#support a{
-    color: rgb(20, 192, 192);
+p {
+    font-size: 1.5rem;
 }
 
 .button-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
+    gap: 0.625rem; /* 10px */
 }
 
 .button {
-    background-image: linear-gradient(to right, #6459f5 0%, #f576f9  51%, #ab30b4  100%);
-    margin: 10px;
-    padding: 15px 45px;
+    background-image: linear-gradient(to right, #6459f5 0%, #f576f9 51%, #ab30b4 100%);
+    margin: 0.625rem; /* 10px */
+    padding: 0.9375rem 2.8125rem; /* 15px 45px */
     text-align: center;
     text-transform: uppercase;
     transition: 0.5s;
     background-size: 200% auto;
-    color: white;            
+    color: white;
     box-shadow: 0 0 20px #e763ee7c;
     border-radius: 10px;
     display: block;
-  }
+}
 
-  .button:hover {
-    background-position: right center; /* change the direction of the change here */
+.button:hover {
+    background-position: right center;
     color: #fff;
     text-decoration: none;
-  }
+}
+
+/* Hide scrollbars */
+.scroll-container::-webkit-scrollbar {
+    display: none;
+}
+
+.scroll-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+/* Keyframes */
+@keyframes fadeInAnimation {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* Media query for small screens */
+@media screen and (max-width: 576px) {
+    #main {
+        text-align: center;
+    }
+
+    #main h1, #main p {
+        max-width: 90%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
