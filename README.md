@@ -83,6 +83,7 @@ This project builds upon the work from:
 - [X] Parameter fine tune(gas_threshold)
 - [ ] Add cruise control or pit limiter(I've tried and it's impossible to do without reaching the core of the game, GO [VOTE](https://forums.forza.net/t/realistic-gearbox-in-forza-horizon/703463) TO LET THEM SEE!!!!!!!!!)
 - [ ] Add adaptive to slope. Hold RPM and do not upshift when climbing.
+- [ ] Reinforcement Learning using velocity
 
 ## ⚠️DISCLAIMER
 
