@@ -1,6 +1,10 @@
 # Realistic Gearbox for Forza Horizon 4/5
 
 ## [Check Out the Website](https://ginolin980.github.io/Forza-Horizon-realistic-gearbox/)
+<a href="https://www.buymeacoffee.com/GinoLin980" target="_blank">
+    <img src="https://raw.githubusercontent.com/pachadotdev/buymeacoffee-badges/main/bmc-yellow.svg" alt="Buy Me a Coffee" style="width: 200px; height: auto;">
+</a>
+
 
 ## Introduction
 
