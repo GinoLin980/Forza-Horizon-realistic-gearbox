@@ -5,10 +5,11 @@ import socket
 import keyboard, time
 from DATAOUT import *
 import GUI
+from dyno import *
 
 # the splash photo when startup
 try:
-    import pyi_splash
+    import pyi_splash # type: ignore
     pyi_splash.close()
 except ImportError:
     pass
@@ -46,6 +47,8 @@ class Gearbox():
 
         self.PREVENT: float = self.last_downshift_time + 1.2
         self.WAIT_TIME_BETWEEN_DOWNSHIFTS: float
+
+        self.run_dyno = False
 
         # define the settings for different driving modes
         # 0 index is : used in aggressiveness increase decision
@@ -298,6 +301,12 @@ class Gearbox():
             # print("Manual Mode")
             self.current_drive_mode = "M"
             self.gas_thresholds = self.MODES["Manual"]
+        
+    def run_dyno(self):
+        if not self.run_dyno: return
+        event = keyboard.read_event()
+        if event.event_type == keyboard.KEY_DOWN and event.name == "F1":
+            self.run_dyno = True
 
     def main(self) -> None:
         # wait for udp server to be ready
@@ -361,6 +370,7 @@ class Gearbox():
             # actually compute and make decision
             self.analyzeInput()
             self.makeDecision()
+            
 if __name__ == "__main__":
     FH_gearbox = Gearbox() # create an instance of the class
     FH_gearbox.main()
