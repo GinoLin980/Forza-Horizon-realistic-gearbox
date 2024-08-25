@@ -66,7 +66,11 @@ class Gearbox():
         
         # GUI information
         # A dictionary for that stores settings across the python files
-        self.condition: dict[str, bool|float|str|int] = {"stop": False, "UDP_started": False, "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0}
+        self.condition: dict[str, bool|float|str|int] = {
+            "stop": False, "UDP_started": False, 
+            "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0,
+            "run_dyno": False, "dyno_data": {"rpm": 0, "hp": 0, "torque": 0}
+            }
         self.APP = GUI.FHRG_GUI(condition=self.condition, VERSION=self.VERSION)
 
     def analyzeInput(self) -> None:

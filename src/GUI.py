@@ -288,7 +288,7 @@ class FHRG_GUI(ctk.CTk):
         about = page_instance.AboutMe(self.VERSION)
         self.intro = page_instance.Introduction()
         self.dyno = page_instance.Dyno()
-        self.dyno.dy
+        # self.dyno.dy
 
         # Add the pages to the self.container
         self.intro.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
