@@ -287,14 +287,16 @@ class FHRG_GUI(ctk.CTk):
         self.home = page_instance.HomePage(condition["UDP_started"])
         about = page_instance.AboutMe(self.VERSION)
         self.intro = page_instance.Introduction()
-        self.dyno = page_instance.Dyno()
-        # self.dyno.dy
+        self.dyno_page = page_instance.Dyno()
 
         # Add the pages to the self.container
         self.intro.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
         self.home.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
-        self.dyno.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
+        self.dyno_page.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
         about.place(in_=self.container, x=0, y=0, relwidth=1, relheight=1)
+
+        # Create dyno instance to let it accessible to other python files
+        self.dyno = page_instance.dyno
 
         # A frame that holds pages' button
         self.button_frame = ctk.CTkFrame(self)
@@ -326,7 +328,7 @@ class FHRG_GUI(ctk.CTk):
             text="Dyno",
             fg_color="dim gray",
             font=ctk.CTkFont(size=14, weight="bold"),
-            command=self.dyno.show,
+            command=self.dyno_page.show,
         )
         self.dyno_button.grid(row=2, column=0, padx=10, pady=5, sticky="new")
 
@@ -433,7 +435,7 @@ class FHRG_GUI(ctk.CTk):
                 release_note = release_note.split("Release Note:\n")[1]
                 release_note = release_note.replace("* ", "")
             except:
-                release_note = "No release note provided"
+                release_note = "No release note provided/Unvalid release note"
             need_updated = latest_release != self.VERSION
             if need_updated:
                 update_window = ctk.CTk()

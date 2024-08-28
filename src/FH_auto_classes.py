@@ -1,4 +1,4 @@
-# 2024/7/6 v2.3.1 added release note and more compatible with trucks(low rpm cars)
+# 2024/8/28 v2.3.2 added dyno and instance. wait for testing
 # By GinoLin980
 import sys; sys.dont_write_bytecode = True # prevent the generation of .pyc files
 import socket
@@ -357,6 +357,20 @@ class Gearbox():
             self.condition["gear"] = self.RETURNED_DATA["Gear"]
             self.condition["drive_mode"] = self.current_drive_mode
             self.APP.update_home(self.condition)
+
+            toggle_dyno = keyboard.read_event()
+            if toggle_dyno.event_type == keyboard.KEY_DOWN:
+                match toggle_dyno.name:
+                    case "F1":
+                        self.APP.dyno.show()
+                        self.run_dyno = True
+                    case "F2":
+                        self.APP.dyno.clear_chart()
+
+            if self.run_dyno:
+                self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"], "torque": self.RETURNED_DATA["Torque"]})
+                if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
+                    self.run_dyno = False
 
             if self.condition["stop"]:
                 sys.exit()
