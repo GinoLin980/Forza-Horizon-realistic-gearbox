@@ -26,7 +26,7 @@ class Gearbox():
         self.RETURNED_DATA: dict
 
         # Car information
-        self.gas: float # originally 0~255, transformed into 0~1
+        self.gas: float = 0 # originally 0~255, transformed into 0~1
         self.brake: float # originally 0~255, transformed into 0~1
         self.gear: int # 0(reverse)~n gear
         self.slip: bool
@@ -305,12 +305,29 @@ class Gearbox():
             # print("Manual Mode")
             self.current_drive_mode = "M"
             self.gas_thresholds = self.MODES["Manual"]
+
+    def dyno_func(self):
+        if keyboard.is_pressed("F1"):
+                self.APP.dyno_page.show()
+                self.run_dyno = True
+        elif keyboard.is_pressed("F2"):
+                self.APP.dyno.clear_chart()
         
-    def run_dyno(self):
-        if not self.run_dyno: return
-        event = keyboard.read_event()
-        if event.event_type == keyboard.KEY_DOWN and event.name == "F1":
-            self.run_dyno = True
+        if self.run_dyno == True:
+            if self.RETURNED_DATA["EngineMaxRpm"] <= 5000: # define a new max rpm for low rpm cars
+                        if self.current_drive_mode == "S":
+                            self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.65
+                        else:
+                            self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.6
+            else:
+                self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86
+
+
+            if self.run_dyno and self.RETURNED_DATA["IsRaceOn"] != 0:
+                if self.condition["gas"] > 0.8:
+                    self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"], "torque": self.RETURNED_DATA["Torque"]})
+                    if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
+                        self.run_dyno = False
 
     def main(self) -> None:
         # wait for udp server to be ready
@@ -358,19 +375,7 @@ class Gearbox():
             self.condition["drive_mode"] = self.current_drive_mode
             self.APP.update_home(self.condition)
 
-            toggle_dyno = keyboard.read_event()
-            if toggle_dyno.event_type == keyboard.KEY_DOWN:
-                match toggle_dyno.name:
-                    case "F1":
-                        self.APP.dyno.show()
-                        self.run_dyno = True
-                    case "F2":
-                        self.APP.dyno.clear_chart()
-
-            if self.run_dyno:
-                self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"], "torque": self.RETURNED_DATA["Torque"]})
-                if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
-                    self.run_dyno = False
+            self.dyno_func()
 
             if self.condition["stop"]:
                 sys.exit()
@@ -378,17 +383,16 @@ class Gearbox():
             self.APP.update()
             self.APP.update_idletasks()
 
-            # stop calculation if the mode is in manual
-            if self.current_drive_mode == "M":
-                continue
             # stop calculation if we are in menu or not driving
             if self.RETURNED_DATA["IsRaceOn"] == 0:
                 continue
             
-            # actually compute and make decision
-            self.analyzeInput()
-            self.makeDecision()
-            
+            # stop calculation if the mode is in manual
+            if not self.current_drive_mode == "M":
+                # actually compute and make decision
+                self.analyzeInput()
+                self.makeDecision()
+                
 if __name__ == "__main__":
     FH_gearbox = Gearbox() # create an instance of the class
     FH_gearbox.main()
