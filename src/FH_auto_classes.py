@@ -17,9 +17,10 @@ except ImportError:
 class Gearbox():
     def __init__(self) -> None:
         self.VERSION: str = "v2.3.1"
-        
+        self.MS_STORE = False
+
         # Network
-        self.UDP_IP: str = "127.0.0.1"  # This sets server ip to localhost
+        self.UDP_IP: str = "127.0.0.1" if not self.MS_STORE else "0.0.0.0"  # This sets server ip to localhost
         self.UDP_PORT: int = 8000  # You can freely edit this
         
         # Store data for cross file data
@@ -48,6 +49,7 @@ class Gearbox():
         self.PREVENT: float = self.last_downshift_time + 1.2
         self.WAIT_TIME_BETWEEN_DOWNSHIFTS: float
 
+        # Misc
         self.run_dyno = False
 
         # define the settings for different driving modes
@@ -308,8 +310,8 @@ class Gearbox():
 
     def dyno_func(self):
         if keyboard.is_pressed("F1"):
-                self.APP.dyno_page.show()
-                self.run_dyno = True
+                    self.APP.dyno_page.show()
+                    self.run_dyno = True
         elif keyboard.is_pressed("F2"):
                 self.APP.dyno.clear_chart()
         
@@ -323,10 +325,12 @@ class Gearbox():
                 self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86
 
 
-            if self.run_dyno and self.RETURNED_DATA["IsRaceOn"] != 0:
+            if self.RETURNED_DATA["IsRaceOn"] != 0:
                 if self.condition["gas"] > 0.8:
-                    self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"], "torque": self.RETURNED_DATA["Torque"]})
+                    self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"] / 746, "torque": self.RETURNED_DATA["Torque"]})
                     if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
+                        print("legend")
+                        self.APP.dyno.after_plot()
                         self.run_dyno = False
 
     def main(self) -> None:
@@ -375,13 +379,16 @@ class Gearbox():
             self.condition["drive_mode"] = self.current_drive_mode
             self.APP.update_home(self.condition)
 
-            self.dyno_func()
-
             if self.condition["stop"]:
                 sys.exit()
 
             self.APP.update()
             self.APP.update_idletasks()
+
+
+            self.dyno_func()
+            if self.run_dyno:
+                continue
 
             # stop calculation if we are in menu or not driving
             if self.RETURNED_DATA["IsRaceOn"] == 0:
