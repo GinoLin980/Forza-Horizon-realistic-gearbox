@@ -1,0 +1,8 @@
+customtkinter
+keyboard
+matplotlib
+numpy
+Pillow
+ping3
+pydivert
+Requests

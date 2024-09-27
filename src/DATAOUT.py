@@ -1,6 +1,5 @@
 import sys; sys.dont_write_bytecode = True
 import socket, struct, select
-from typing import Dict, Union
 
 # to check the UDP server is outputing the data or not
 def UDPconnectable(ip: str, port: int) -> bool:
@@ -120,9 +119,9 @@ jumps = {
     "hzn": 12,  # Unknown, 12 bytes of.. something
 }
 
-def get_data(data: bytes) -> Dict[str, Union[int, float]]:
+def get_data(data: bytes) -> dict[str, int | float]:
     """Receive data from socket and process depend on types"""
-    return_dict = {}
+    return_dict: dict[str, int | float] = {}
 
     # additional var
     passed_data = data

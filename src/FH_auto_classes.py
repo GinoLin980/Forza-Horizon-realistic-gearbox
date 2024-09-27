@@ -1,14 +1,15 @@
-# 2024/7/6 v2.3.1 added release note and more compatible with trucks(low rpm cars)
+# 2024/8/28 v2.3.2 added dyno and instance. wait for testing
 # By GinoLin980
 import sys; sys.dont_write_bytecode = True # prevent the generation of .pyc files
 import socket
 import keyboard, time
 from DATAOUT import *
 import GUI
+from dyno import *
 
 # the splash photo when startup
 try:
-    import pyi_splash
+    import pyi_splash # type: ignore
     pyi_splash.close()
 except ImportError:
     pass
@@ -16,16 +17,17 @@ except ImportError:
 class Gearbox():
     def __init__(self) -> None:
         self.VERSION: str = "v2.3.1"
-        
+        self.MS_STORE = False
+
         # Network
-        self.UDP_IP: str = "127.0.0.1"  # This sets server ip to localhost
+        self.UDP_IP: str = "127.0.0.1" if not self.MS_STORE else "0.0.0.0"  # This sets server ip to localhost
         self.UDP_PORT: int = 8000  # You can freely edit this
         
         # Store data for cross file data
         self.RETURNED_DATA: dict
 
         # Car information
-        self.gas: float # originally 0~255, transformed into 0~1
+        self.gas: float = 0 # originally 0~255, transformed into 0~1
         self.brake: float # originally 0~255, transformed into 0~1
         self.gear: int # 0(reverse)~n gear
         self.slip: bool
@@ -47,6 +49,9 @@ class Gearbox():
         self.PREVENT: float = self.last_downshift_time + 1.2
         self.WAIT_TIME_BETWEEN_DOWNSHIFTS: float
 
+        # Misc
+        self.run_dyno = False
+
         # define the settings for different driving modes
         # 0 index is : used in aggressiveness increase decision
         # 1 index is : used in aggressiveness increase decision
@@ -63,7 +68,11 @@ class Gearbox():
         
         # GUI information
         # A dictionary for that stores settings across the python files
-        self.condition: dict[str, bool|float|str|int] = {"stop": False, "UDP_started": False, "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0}
+        self.condition: dict[str, bool|float|str|int] = {
+            "stop": False, "UDP_started": False, 
+            "gas": 0, "brake": 0, "drive_mode": "D", "gear": 0,
+            "run_dyno": False, "dyno_data": {"rpm": 0, "hp": 0, "torque": 0}
+            }
         self.APP = GUI.FHRG_GUI(condition=self.condition, VERSION=self.VERSION)
 
     def analyzeInput(self) -> None:
@@ -299,6 +308,31 @@ class Gearbox():
             self.current_drive_mode = "M"
             self.gas_thresholds = self.MODES["Manual"]
 
+    def dyno_func(self):
+        if keyboard.is_pressed("F1"):
+                    self.APP.dyno_page.show()
+                    self.run_dyno = True
+        elif keyboard.is_pressed("F2"):
+                self.APP.dyno.clear_chart()
+        
+        if self.run_dyno == True:
+            if self.RETURNED_DATA["EngineMaxRpm"] <= 5000: # define a new max rpm for low rpm cars
+                        if self.current_drive_mode == "S":
+                            self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.65
+                        else:
+                            self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.6
+            else:
+                self.max_shift_rpm: float = self.RETURNED_DATA["EngineMaxRpm"] * 0.86
+
+
+            if self.RETURNED_DATA["IsRaceOn"] != 0:
+                if self.condition["gas"] > 0.8:
+                    self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"] / 746, "torque": self.RETURNED_DATA["Torque"]})
+                    if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
+                        print("legend")
+                        self.APP.dyno.after_plot()
+                        self.run_dyno = False
+
     def main(self) -> None:
         # wait for udp server to be ready
         while True:
@@ -351,16 +385,21 @@ class Gearbox():
             self.APP.update()
             self.APP.update_idletasks()
 
-            # stop calculation if the mode is in manual
-            if self.current_drive_mode == "M":
+
+            self.dyno_func()
+            if self.run_dyno:
                 continue
+
             # stop calculation if we are in menu or not driving
             if self.RETURNED_DATA["IsRaceOn"] == 0:
                 continue
             
-            # actually compute and make decision
-            self.analyzeInput()
-            self.makeDecision()
+            # stop calculation if the mode is in manual
+            if not self.current_drive_mode == "M":
+                # actually compute and make decision
+                self.analyzeInput()
+                self.makeDecision()
+                
 if __name__ == "__main__":
     FH_gearbox = Gearbox() # create an instance of the class
     FH_gearbox.main()
