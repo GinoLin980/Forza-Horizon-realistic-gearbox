@@ -15,13 +15,13 @@ except:
 gas_thresholds = [1, 0.5, 6, 0.12] # Eco mode
 
 # [0.95, 0.3, 12, 0.12] # Normal mode
-# [0.8, 0.4, 24, 0.35] # Sports mode
+# [0.8, 0.4, 24, 0.25] # Sports mode
 # [1, 0.5, 6, 0.12] # Eco mode
 
 
 # adjust the rpm if needed
-idleRPM = 790
-maxShiftRPM = 7000
+idleRPM = 1265.6243896484375
+maxShiftRPM = 7309.99580078125
 
 gas = 0
 brake = 0
@@ -111,6 +111,7 @@ while True:
     gas_calculation = round((gas - gas_thresholds[1]) / (gas_thresholds[0] - gas_thresholds[1])*1.5, 4)
     brake_calculation = round((brake - (gas_thresholds[1] - 0.3)) / (gas_thresholds[0] - gas_thresholds[1]) * 1.6, 4)
 
+
     new_aggr =  round(min(1, max(gas_calculation, brake_calculation)), 4)
     
     print(f"Gas calculation: {gas_calculation}")
@@ -118,7 +119,7 @@ while True:
     print(f"Biggest: {"Gas" if gas_calculation > brake_calculation else "Brake"} ({new_aggr})")
 
     new_aggr = max(new_aggr, gas_thresholds[3])
-    rpmRangeTop = round((idleRPM + 650 + ((maxShiftRPM - idleRPM - 400) * new_aggr * 0.95)), 4)
+    rpmRangeTop = round((idleRPM + 50 + ((maxShiftRPM - idleRPM - 400) * new_aggr)), 4)
     rpm_added = round(((maxShiftRPM - idleRPM - 400) * new_aggr * 0.95), 4)
     
     print("\n")

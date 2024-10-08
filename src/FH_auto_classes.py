@@ -40,6 +40,7 @@ class Gearbox():
         self.last_shift_time: float = 0
         self.last_upshift_time: float = 0
         self.last_downshift_time: float = 0
+        self.last_uphill_time: float = 0
         # self.toggle_cruise_control: bool = False
         # self.cruise_control_target: int = -1
 
@@ -59,7 +60,7 @@ class Gearbox():
         # 3 index is : the bare minimum aggressiveness to keep at any given time
         self.MODES: dict[str, list[float]] = {
             "Normal": [0.95, 0.35, 12, 0.12],
-            "Sports": [0.8, 0.4, 24, 0.35],
+            "Sports": [0.8, 0.4, 24, 0.25],
             "Eco": [1, 0.35, 6, 0.12],
             "Manual": [0, 0, 0, 0]
         }
@@ -85,6 +86,7 @@ class Gearbox():
         self.gear = self.RETURNED_DATA["Gear"]
 
         idleRPM: float = self.RETURNED_DATA["EngineIdleRpm"]
+
         # max rpm
         if self.RETURNED_DATA["EngineMaxRpm"] <= 5000: # define a new max rpm for low rpm cars
             if self.current_drive_mode == "S":
@@ -103,7 +105,7 @@ class Gearbox():
                 (self.gas - self.gas_thresholds[1]) / (self.gas_thresholds[0] - self.gas_thresholds[1]) * 1.5,
                 (self.brake - (self.gas_thresholds[1] - 0.3)) / (self.gas_thresholds[0] - self.gas_thresholds[1]) * 1.6
             )
-        )
+        ) 
 
         # new_aggr = min(1, (gas - gas_thresholds[drive_mode][1]) / (gas_thresholds[drive_mode][0] - gas_thresholds[drive_mode][1]))
         # ex full accel: 1, (1 - 0.35) / (0.95 - 0.35)*1.5
@@ -129,11 +131,12 @@ class Gearbox():
 
         # adjust the allowed upshifting rpm range,
         # depending on the aggressiveness
-        self.rpm_range_top = idleRPM + 950 + ((self.max_shift_rpm - idleRPM - 300) * self.aggressiveness * 0.9)
+        self.rpm_range_top = (idleRPM + 100 + ((self.max_shift_rpm - idleRPM - 400) * self.aggressiveness))
+
 
         # adjust the allowed downshifting rpm range,
         # depending on the aggressiveness
-        self.rpm_range_bottom = max(idleRPM + (min(self.gear, 6) * 70), self.rpm_range_top - self.rpm_range_size)
+        self.rpm_range_bottom = max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size)
 
         # (slip condition)
         if (
@@ -170,6 +173,17 @@ class Gearbox():
                 self.WAIT_TIME_BETWEEN_DOWNSHIFTS = 0.2
             elif self.brake == 0:
                 self.WAIT_TIME_BETWEEN_DOWNSHIFTS = 0.7
+
+        if self.RETURNED_DATA["Pitch"] < -0.12:
+            self.gas_thresholds = self.MODES["Sports"]
+            self.last_uphill_time = time.time()
+        elif self.last_uphill_time - time.time() < 5:
+            match self.current_drive_mode:
+                case "D":
+                    self.gas_thresholds = self.MODES["Normal"]
+                case "E":
+                    self.gas_thresholds = self.MODES["Eco"]
+        # print(self.RETURNED_DATA["Pitch"], self.rpm_range_top, self.max_shift_rpm, self.last_uphill_time - time.time(), self.gas_thresholds)
 
         ## gear changing section
         # not changing gear
@@ -209,6 +223,7 @@ class Gearbox():
             speed > 4
             # count means we can slowly accelerate like we do in real car
             # or count == 300
+            and (time.time() - self.last_uphill_time > 5 or rpm > self.max_shift_rpm)
         ):
             # if we are in high rpm(normally 5X00 rpm) and lower than the maximum rpm, have been intensively driving and in sports mode.
             if rpm > self.rpm_range_size * 2 and rpm < self.max_shift_rpm - 500 and self.sports_high_rpm:
@@ -235,6 +250,9 @@ class Gearbox():
             and
             # prevent from over downshift 
             not rpm > self.rpm_range_size * 2.3
+            and
+            # too little gas
+            not (self.gas < 0.35 and rpm < 1800)
             and
             # depending on which gears we'll end up into
             (
@@ -329,7 +347,6 @@ class Gearbox():
                 if self.condition["gas"] > 0.8:
                     self.APP.dyno.add_new_power_data({"rpm": int(self.RETURNED_DATA["CurrentEngineRpm"]), "hp": self.RETURNED_DATA["Power"] / 746, "torque": self.RETURNED_DATA["Torque"]})
                     if self.RETURNED_DATA["CurrentEngineRpm"] > self.max_shift_rpm:
-                        print("legend")
                         self.APP.dyno.after_plot()
                         self.run_dyno = False
 
@@ -379,6 +396,7 @@ class Gearbox():
             self.condition["drive_mode"] = self.current_drive_mode
             self.APP.update_home(self.condition)
 
+
             if self.condition["stop"]:
                 sys.exit()
 
@@ -393,6 +411,9 @@ class Gearbox():
             # stop calculation if we are in menu or not driving
             if self.RETURNED_DATA["IsRaceOn"] == 0:
                 continue
+            print("Px ", self.RETURNED_DATA['PositionX'])
+            print("Py ", self.RETURNED_DATA['PositionY'])
+            print("Pz ", self.RETURNED_DATA['PositionZ'])
             
             # stop calculation if the mode is in manual
             if not self.current_drive_mode == "M":
