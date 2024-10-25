@@ -237,8 +237,8 @@ class Gearbox():
 
         # downshift logic
         elif (
-            # we have reached the lower rpm range (downshift are rpm-allowed)
-            rpm < self.rpm_range_bottom
+            # we have reached the lower rpm range (downshift are rpm-allowed) (-400 for lower rpm cars)
+            rpm < self.rpm_range_bottom - 400
             and 
             not self.slip
             and
