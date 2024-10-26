@@ -237,12 +237,12 @@ class Gearbox():
 
         # downshift logic
         elif (
-            # we have reached the lower rpm range (downshift are rpm-allowed)
-            rpm < self.rpm_range_bottom
-            and 
+          # we have reached the lower rpm range (downshift are rpm-allowed) (-400 for lower rpm cars and it looks if the rpm range is below or = 6100) else it defaults to the downshifting pattern.
+            (rpm < self.rpm_range_bottom - 400) if (self.rpm_range_top <= 6100) else (rpm < self.rpm_range_bottom)
+            and    
             not self.slip
-            and
-            # we are not in first gear (meaning we have gears available bellow us)
+            # we are not in first gear (meaning we have gears available below us)
+            and 
             self.gear > 1
             and
             # we have not downshifted in the last 0.7 sec
