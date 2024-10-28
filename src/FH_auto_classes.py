@@ -136,7 +136,11 @@ class Gearbox():
 
         # adjust the allowed downshifting rpm range,
         # depending on the aggressiveness
-        self.rpm_range_bottom = max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size)
+        #(-400 for lower rpm cars and it looks if the rpm range is below or = 6100) else it defaults to normal self.rpm_range_bottom 
+        self.rpm_range_bottom = (
+        max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size) - 400 
+        if (self.rpm_range_top <= 6100) 
+        else max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size)
 
         # (slip condition)
         if (
@@ -237,8 +241,8 @@ class Gearbox():
 
         # downshift logic
         elif (
-          # we have reached the lower rpm range (downshift are rpm-allowed) (-400 for lower rpm cars and it looks if the rpm range is below or = 6100) else it defaults to the downshifting pattern.
-            (rpm < self.rpm_range_bottom - 400) if (self.rpm_range_top <= 6100) else (rpm < self.rpm_range_bottom)
+            # we have reached the lower rpm range (downshift are rpm-allowed) 
+            rpm <self.rpm_range_bottom
             and    
             not self.slip
             # we are not in first gear (meaning we have gears available below us)
