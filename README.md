@@ -77,7 +77,8 @@ This project builds upon the work from:
 
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
 - [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
-- [Retroflect](https://github.com/twisteroidambassador/retroflect/)
+- [twisteroidambassador/retroflect](https://github.com/twisteroidambassador/retroflect)
+- [GinoLin980/retroflect](https://github.com/GinoLin980/retroflect)
 
 ### Big thanks to these bros, I can't make this without them. 🫶
 
