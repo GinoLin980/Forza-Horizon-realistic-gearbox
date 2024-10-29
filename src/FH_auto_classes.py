@@ -14,7 +14,7 @@ try:
 except ImportError:
     pass
 
-class Gearbox():
+class Gearbox(): 
     def __init__(self) -> None:
         self.VERSION: str = "v2.3.1"
         self.MS_STORE = False
@@ -137,11 +137,9 @@ class Gearbox():
         # adjust the allowed downshifting rpm range,
         # depending on the aggressiveness
         #(-400 for lower rpm cars and it looks if the rpm range is below or = 6200) else it defaults to normal self.rpm_range_bottom 
-        self.rpm_range_bottom = (
-        max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size) - 400 
-        if (self.rpm_range_top <= 6200) 
-        else max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size)
-
+         self.rpm_range_bottom = max(idleRPM + (min(self.gear, 6) * 70) * 0.96, self.rpm_range_top - self.rpm_range_size)
+        if (self.rpm_range_top <= 6200):
+            self.rpm_range_bottom -= 400
         # (slip condition)
         if (
             self.RETURNED_DATA["TireSlipRatioFrontLeft"] > 1
