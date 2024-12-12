@@ -71,6 +71,9 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 
 <img src="https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/blob/25d3143bfbc95b245c64a806873387541563770c/ping_tool_illustrated.png" width="450" />
 
+## Tips
+If you want to run the game and this app or even Retroflect all at one click, you can check the [discussion here](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/discussions/6#discussioncomment-11541512)
+
 ## Forked From🤞
 
 This project builds upon the work from:
