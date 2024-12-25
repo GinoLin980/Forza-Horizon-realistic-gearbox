@@ -71,13 +71,17 @@ Check out the [Demonstration Video](https://youtu.be/d2Cw0pS0UbA) to see the gea
 
 <img src="https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/blob/25d3143bfbc95b245c64a806873387541563770c/ping_tool_illustrated.png" width="450" />
 
+## Tips
+If you want to run the game and this app or even Retroflect all at one click, you can check the [discussion here](https://github.com/GinoLin980/Forza-Horizon-realistic-gearbox/discussions/6#discussioncomment-11541512)
+
 ## Forked From🤞
 
 This project builds upon the work from:
 
 - [Forza Horizon Data Out Python](https://github.com/nikidziuba/Forza_horizon_data_out_python)
 - [Assetto Corsa Real Automatic Gearbox](https://github.com/AnnoyingTechnology/assetto-corsa-real-automatic-gearbox)
-- [Retroflect](https://github.com/twisteroidambassador/retroflect/)
+- [twisteroidambassador/retroflect](https://github.com/twisteroidambassador/retroflect)
+- [GinoLin980/retroflect](https://github.com/GinoLin980/retroflect)
 
 ### Big thanks to these bros, I can't make this without them. 🫶
 
