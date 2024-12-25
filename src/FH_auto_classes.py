@@ -16,8 +16,8 @@ except ImportError:
 
 class Gearbox():
     def __init__(self) -> None:
-        self.VERSION: str = "v2.3.1"
-        self.MS_STORE = False
+        self.VERSION: str = "v2.4"
+        self.MS_STORE = True
 
         # Network
         self.UDP_IP: str = "127.0.0.1" if not self.MS_STORE else "0.0.0.0"  # This sets server ip to localhost
@@ -411,9 +411,6 @@ class Gearbox():
             # stop calculation if we are in menu or not driving
             if self.RETURNED_DATA["IsRaceOn"] == 0:
                 continue
-            print("Px ", self.RETURNED_DATA['PositionX'])
-            print("Py ", self.RETURNED_DATA['PositionY'])
-            print("Pz ", self.RETURNED_DATA['PositionZ'])
             
             # stop calculation if the mode is in manual
             if not self.current_drive_mode == "M":
